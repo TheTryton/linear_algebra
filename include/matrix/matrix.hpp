@@ -4,11 +4,54 @@
 #include <ostream>
 #include <initializer_list>
 #include <optional>
+#include <algorithm>
+#include <numeric>
 
 using uint = unsigned int;
 
 template<class T, uint D>
 class vector;
+
+template<class T, uint N, uint M>
+class matrix_storage_static
+{
+private:
+    T _mat[N][M];
+public:
+    inline const T* operator[](size_t x) const
+    {
+        return _mat[x];
+    }
+    inline T* operator[](size_t x)
+    {
+        return _mat[x];
+    }
+};
+
+template<class T, uint N, uint M>
+class matrix_storage_dynamic
+{
+private:
+    T* _mat = nullptr;
+public:
+    matrix_storage_dynamic()
+    {
+        _mat = new T[N*M];
+    }
+    ~matrix_storage_dynamic()
+    {
+        delete[] _mat;
+    }
+public:
+    inline const T* operator[](size_t x) const
+    {
+        return _mat + x * M;
+    }
+    inline T* operator[](size_t x)
+    {
+        return _mat + x*M;
+    }
+};
 
 template<class T, uint N, uint M>
 class matrix
@@ -19,7 +62,8 @@ class matrix
     template<class T, uint D>
     friend class vector;
 private:
-    T _mat[N][M];
+    using storage_type = typename std::conditional_t<(N*M >= 10000), matrix_storage_dynamic<T, N, M>, matrix_storage_static<T, N, M >>;
+    storage_type _mat;
 private:
     class matrix_proxy_column
     {
@@ -660,7 +704,7 @@ public:
     }
 public:
     template<typename = typename std::enable_if_t<N == M>>
-    std::optional<T> determinant() const
+    T determinant() const
     {
         matrix<T, N, M> copy(*this);
         //gaussian algorithm to turn matrix into triangular matrix
@@ -689,7 +733,7 @@ public:
                 }
                 else
                 {
-                    return std::optional<T>();
+                    return static_cast<T>(0);
                 }
             }
             for (uint y = xy + 1; y < M; y++)
@@ -735,7 +779,7 @@ public:
                 }
                 else
                 {
-                    return std::optional<matrix<T, N, M>>();
+                    return std::nullopt;
                 }
             }
 

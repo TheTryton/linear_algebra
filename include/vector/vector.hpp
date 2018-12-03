@@ -12,6 +12,79 @@ template<class T, uint N, uint M>
 class matrix;
 
 template<class T, uint D>
+class vector_storage_static
+{
+private:
+    T _coords[D];
+public:
+    inline const T& operator[](size_t d) const
+    {
+        return _coords[d];
+    }
+    inline T& operator[](size_t d)
+    {
+        return _coords[d];
+    }
+    const T* begin() const
+    {
+        return _coords;
+    }
+    T* begin()
+    {
+        return _coords;
+    }
+    const T* end() const
+    {
+        return _coords + D;
+    }
+    T* end()
+    {
+        return _coords + D;
+    }
+};
+
+template<class T, uint D>
+class vector_storage_dynamic
+{
+private:
+    T* _coords = nullptr;
+public:
+    vector_storage_dynamic()
+    {
+        _mat = new T[D];
+    }
+    ~vector_storage_dynamic()
+    {
+        delete[] _mat;
+    }
+public:
+    inline const T& operator[](size_t d) const
+    {
+        return _coords[d];
+    }
+    inline T& operator[](size_t d)
+    {
+        return _coords[d];
+    }
+    const T* begin() const
+    {
+        return _coords;
+    }
+    T* begin()
+    {
+        return _coords;
+    }
+    const T* end() const
+    {
+        return _coords + D;
+    }
+    T* end()
+    {
+        return _coords + D;
+    }
+};
+
+template<class T, uint D>
 class vector
 {
     static_assert(std::is_arithmetic_v<T>, "Vector element type must be a scalar!");
@@ -20,37 +93,38 @@ class vector
     template<class D, uint N0, uint M0>
     friend class matrix;
 private:
-    T _coords[D];
+    using storage_type = typename std::conditional_t<(D >= 10000), vector_storage_dynamic<T, D>, vector_storage_static<T, D>>;
+    storage_type _coords;
 public:
     vector()
     {
-        std::fill(_coords, _coords + D, static_cast<T>(0));
+        std::fill(_coords.begin(), _coords.end(), static_cast<T>(0));
     }
     
     template<class T0, uint D0>
     vector(const vector<T0,D0>& other)
     {
         constexpr uint DM = D0 > D ? D : D0;
-        std::transform(other._coords, other._coords + DM, _coords, [](const T0& v) {
+        std::transform(other._coords.begin(), other._coords.begin() + DM, _coords.begin(), [](const T0& v) {
             return static_cast<T>(v);
         });
-        std::fill(_coords + DM, _coords + D, static_cast<T>(0));
+        std::fill(_coords.begin() + DM, _coords.begin() + D, static_cast<T>(0));
     }
     template<class T0, uint D0>
     vector(vector<T0, D0>&& other)
     {
         constexpr uint DM = D0 > D ? D : D0;
-        std::transform(other._coords, other._coords + DM, _coords, [](const T0& v) {
+        std::transform(other._coords.begin(), other._coords.begin() + DM, _coords.begin(), [](const T0& v) {
             return static_cast<T>(v);
         });
-        std::fill(_coords + DM, _coords + D, static_cast<T>(0));
+        std::fill(_coords.begin() + DM, _coords.begin() + D, static_cast<T>(0));
     }
     
     template<class T0, uint D0>
     vector<T,D>& operator=(const vector<T0, D0>& other)
     {
         constexpr uint DM = D0 > D ? D : D0;
-        std::transform(other._coords, other._coords + DM, _coords, [](const T0& v) {
+        std::transform(other._coords.begin(), other._coords.begin() + DM, _coords.begin(), [](const T0& v) {
             return static_cast<T>(v);
         });
         return *this;
@@ -59,7 +133,7 @@ public:
     vector<T, D>& operator=(vector<T0, D0>&& other)
     {
         constexpr uint DM = D0 > D ? D : D0;
-        std::transform(other._coords, other._coords + DM, _coords, [](const T0& v) {
+        std::transform(other._coords.begin(), other._coords.begin() + DM, _coords.begin(), [](const T0& v) {
             return static_cast<T>(v);
         });
         return *this;
@@ -82,7 +156,7 @@ public:
     vector(std::initializer_list<T0> init_list)
     {
         uint DM = init_list.size() > D ? D : init_list.size();
-        std::transform(init_list.begin(), init_list.begin() + DM, _coords, [](const T0& v) {
+        std::transform(init_list.begin(), init_list.begin() + DM, _coords.begin(), [](const T0& v) {
             return static_cast<T>(v);
         });
     }
@@ -104,8 +178,8 @@ public:
     template<class T0>
     vector<T, D>& operator=(std::initializer_list<T0> init_list)
     {
-        uint DM = init_list.size() > D ? D : init_list.size();
-        std::transform(init_list.begin(), init_list.begin() + DM, _coords, [](const T0& v) {
+        uint DM = init_list.size() > D ? D : static_cast<uint>(init_list.size());
+        std::transform(init_list.begin(), init_list.begin() + DM, _coords.begin(), [](const T0& v) {
             return static_cast<T>(v);
         });
         return *this;
@@ -140,10 +214,9 @@ public:
     {
         using cm_t = decltype(std::declval<T>() * std::declval<T0>());
         vector<cm_t, D> result(*this);
-        for (uint d = 0; d < D; d++)
-        {
-            result._coords[d] *= v;
-        }
+        std::transform(result._coords.begin(), result._coords.end(), result._coords.begin(), [&v](const T& vec_dim) {
+            return vec_dim * v;
+        });
         return result;
     }
     template<class T0>
@@ -151,10 +224,9 @@ public:
     {
         using cm_t = decltype(std::declval<T>() * std::declval<T0>());
         vector<cm_t, D> result(*this);
-        for (uint d = 0; d < D; d++)
-        {
-            result._coords[d] /= v;
-        }
+        std::transform(result._coords.begin(), result._coords.end(), result._coords.begin(), [&v](const T& vec_dim) {
+            return vec_dim / v;
+        });
         return result;
     }
 
@@ -181,19 +253,17 @@ public:
     template<class T0>
     vector<T, D>& operator*=(const T0& v)
     {
-        for (uint d = 0; d < D; d++)
-        {
-            _coords[d] *= static_cast<T>(v);
-        }
+        std::transform(_coords.begin(), _coords.end(), _coords.begin(), [&v](const T& vec_dim) {
+            return vec_dim * v;
+        });
         return *this;
     }
     template<class T0>
     vector<T, D>& operator/=(const T0& v)
     {
-        for (uint d = 0; d < D; d++)
-        {
-            _coords[d] /= static_cast<T>(v);
-        }
+        std::transform(_coords.begin(), _coords.end(), _coords.begin(), [&v](const T& vec_dim) {
+            return vec_dim / v;
+        });
         return *this;
     }
     
@@ -220,19 +290,19 @@ public:
 
     T* begin()
     {
-        return _coords;
+        return _coords.begin();
     }
     const T* begin() const
     {
-        return _coords;
+        return _coords.begin();
     }
     T* end()
     {
-        return _coords + D;
+        return _coords.end();
     }
     const T* end() const
     {
-        return _coords + D;
+        return _coords.end();
     }
 
     template<class D0, uint M>
@@ -244,7 +314,7 @@ public:
     {
         for (uint d = 0; d < D; d++)
         {
-            if(std::abs(other._coords[d]-_coords[d]) > std::numeric_limits<T>::epsilon())
+            if(std::abs(other._coords[d] - _coords[d]) > std::numeric_limits<T>::epsilon())
             {
                 return false;
             }
@@ -389,12 +459,12 @@ public:
 
     inline auto magnitude() const
     {
-        auto ip = std::inner_product(_coords, _coords + D, _coords, static_cast<T>(0));
+        auto ip = std::inner_product(_coords.begin(), _coords.end(), _coordsbegin(), static_cast<T>(0));
         return std::sqrt(ip);
     }
     inline auto magnitude_sqr() const
     {
-        return std::inner_product(_coords, _coords + D, _coords, static_cast<T>(0));
+        return std::inner_product(_coords.begin(), _coords.end(), _coords.begin(), static_cast<T>(0));
     }
     inline auto length() const
     {
@@ -417,7 +487,7 @@ public:
     inline auto inner_product(const vector<T0,D>& other)
     {
         using cm_t = decltype(std::declval<T0>() * std::declval<T>() + std::declval<T0>() * std::declval<T>());
-        return std::inner_product(_coords, _coords + D, other._coords, static_cast<cm_t>(0));
+        return std::inner_product(_coords.begin(), _coords.end(), other._coords.begin(), static_cast<cm_t>(0));
     }
 public:
     template<class T0, uint D0>

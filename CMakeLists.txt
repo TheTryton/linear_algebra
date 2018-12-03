@@ -11,7 +11,6 @@ set(linear_algebra_Sources
 	
 	include/matrix/matrix.hpp
 	include/vector/vector.hpp
-	
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${linear_algebra_Sources})
