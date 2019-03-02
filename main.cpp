@@ -4,6 +4,8 @@
 #include "include/geometry/primitives/simplex.inl"
 #include "include/geometry/projections/projections.hpp"
 #include "include/geometry/projections/projections.inl"
+#include "include/geometry/intersections/intersections.hpp"
+#include "include/geometry/intersections/intersections.inl"
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -244,37 +246,48 @@ void draw_segment(const geometry2D::segment<double>& segment, std::vector<char>&
 
 #include <iostream>
 
+
 int main()
 {
-    using matrix3x3 = linear_algebra::matrix<double, 3, 3>;
+    geometry::space<double, 3, 5> space1;
+    space1[0] = { 0,0,0,0,0 };
+    space1[1] = { 1,0,0,0,0 };
+    space1[2] = { 0,1,0,0,0 };
+    space1[3] = { 0,0,1,0,0 };
+    geometry::space<double, 4, 5> space2;
+    space2[0] = { 0,0,0,0,0 };
+    space2[1] = { 1,0,0,0,0 };
+    space2[2] = { 0,1,0,0,0 };
+    space2[3] = { 0,0,0,1,0 };
+    space2[4] = { 0,0,0,0,1 };
 
-    linear_algebra::matrix<double, 4, 4> coeffs = 
-    {
-        {1,0,0,0},
-        {0,0,0,0},
-        {0,1,1,0},
-        {0,0,0,1}
-    };
+    using namespace geometry::geometry_io;
+    std::cout << space1 << std::endl;
+    std::cout << space2 << std::endl;
 
-    linear_algebra::vector<double, 4> constants =
-    {
-        2,
-        0,
-        4,
-        5
-    };
-
-    auto result = linear_algebra::solve_equation_system(coeffs, constants);
+    auto result = geometry::intersections::intersection(space1, space2);
     if(!result)
     {
-        std::cout << "no solution" << std::endl;
+        std::cout << "no intersection" << std::endl;
     }
     else
     {
-        std::cout << (*result).first << std::endl;
-        for (auto& v : (*result).second)
+        auto& r = *result;
+        if(r.index() == 0)
         {
-            std::cout << v << std::endl;
+            std::cout << std::get<0>(r) << std::endl;
+        }
+        else if(r.index() == 1)
+        {
+            std::cout << std::get<1>(r) << std::endl;
+        }
+        else if (r.index() == 2)
+        {
+            std::cout << std::get<2>(r) << std::endl;
+        }
+        else if (r.index() == 3)
+        {
+            std::cout << std::get<3>(r) << std::endl;
         }
     }
 

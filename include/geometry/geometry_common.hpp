@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <variant>
+#include <tuple>
 
 #include "../linear_algebra/linear_algebra.hpp"
 
@@ -15,6 +17,10 @@
 #define PROJECTIONS projections
 #define NAMESPACE_PROJECTIONS_BEGIN namespace PROJECTIONS{
 #define NAMESPACE_PROJECTIONS_END }
+
+#define INTERSECTIONS intersections
+#define NAMESPACE_INTERSECTIONS_BEGIN namespace INTERSECTIONS{
+#define NAMESPACE_INTERSECTIONS_END }
 
 NAMESPACE_GEOMETRY_BEGIN
 
