@@ -31,6 +31,9 @@ set(linear_algebra_Sources
     include/geometry/projections/projections.hpp
     include/geometry/projections/projections.inl
 
+    include/geometry/intersections/intersections.hpp
+    include/geometry/intersections/intersections.inl
+
     ##2D geometry
 
     include/geometry2D/geometry2D_common.hpp

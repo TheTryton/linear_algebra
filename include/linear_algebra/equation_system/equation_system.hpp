@@ -110,8 +110,8 @@ std::optional<equation_system_solution<T,M>> solve_equation_system(const matrix<
 
         //there can be at max D finite solutions to equation system i.e if N >= M there is only M variables but
         //N equations so at max there can only be min(N,M) == M solutions
-        //if there is N < M there is more variables than equations thus only N finite solutions
-        //other variables can be interpreted as parameters to equation and used to create vectors
+        //if there is N < M there is more variables than equations thus only N finite solutions (constant solution)
+        //other variables can be interpreted as parameters to solution and used to create vectors
         //forming infinite solution set
 
         bool non_finite_solution_variables[M];
@@ -144,9 +144,9 @@ std::optional<equation_system_solution<T,M>> solve_equation_system(const matrix<
             }
         }
 
-        //if any column after last finite solution column
-        //has element unequal to zero it means that it must be treated as parameter
-        //thus it creates vector forming infinite solution set
+        //variables that have no finite solution (constant solution), i.e that haven't been assigned to 
+        //some constant term are treated as parameters to solution and are used to create vectors
+        //forming infinite solution set
         std::vector<vector<T, M>> infinite_solution_vectors;
         for (size_t column = 0; column < M; column++)
         {

@@ -22,11 +22,11 @@ namespace detail
 }
 
 template<class T, size_t D, size_t SD1, size_t SD2>
-using space_space_intersection = typename detail::space_space_intersection_type_impl<
+using space_space_intersection = typename detail::space_space_intersection_type_impl <
     T,
-    D, 
+    D,
     decltype(std::make_index_sequence<
-        SD1 == SD2 ? SD1 : (SD1 < SD2 ? SD1 : SD2)
+        SD1 <= SD2 ? SD1 : SD2
     >())
 >::space_space_intersection_type;
 

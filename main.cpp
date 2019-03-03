@@ -246,26 +246,20 @@ void draw_segment(const geometry2D::segment<double>& segment, std::vector<char>&
 
 #include <iostream>
 
-
 int main()
 {
-    geometry::space<double, 3, 5> space1;
-    space1[0] = { 0,0,0,0,0 };
-    space1[1] = { 1,0,0,0,0 };
-    space1[2] = { 0,1,0,0,0 };
-    space1[3] = { 0,0,1,0,0 };
-    geometry::space<double, 4, 5> space2;
-    space2[0] = { 0,0,0,0,0 };
-    space2[1] = { 1,0,0,0,0 };
-    space2[2] = { 0,1,0,0,0 };
-    space2[3] = { 0,0,0,1,0 };
-    space2[4] = { 0,0,0,0,1 };
+    geometry::space<double, 1, 2> l1;
+    l1[0] = { 1,3 };
+    l1[1] = { 3,5 };
+    geometry::space<double, 1, 2> l2;
+    l2[0] = { 0,2 };
+    l2[1] = { 2,4 };
 
     using namespace geometry::geometry_io;
-    std::cout << space1 << std::endl;
-    std::cout << space2 << std::endl;
+    std::cout << l1 << std::endl;
+    std::cout << l2 << std::endl;
 
-    auto result = geometry::intersections::intersection(space1, space2);
+    auto result = geometry::intersections::intersection(l1, l2);
     if(!result)
     {
         std::cout << "no intersection" << std::endl;
@@ -280,14 +274,6 @@ int main()
         else if(r.index() == 1)
         {
             std::cout << std::get<1>(r) << std::endl;
-        }
-        else if (r.index() == 2)
-        {
-            std::cout << std::get<2>(r) << std::endl;
-        }
-        else if (r.index() == 3)
-        {
-            std::cout << std::get<3>(r) << std::endl;
         }
     }
 

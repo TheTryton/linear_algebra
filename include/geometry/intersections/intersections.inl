@@ -176,7 +176,6 @@ std::optional<plane_plane_intersection<T, D>> intersection(const space<T, 2, D>&
 }
 
 //space-space
-
 template<class T, size_t D, size_t SD1, size_t SD2, size_t SD>
 space_space_intersection<T, D, SD1, SD2> get_result(std::vector<point_type<T, D>>&& points)
 {
