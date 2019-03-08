@@ -40,21 +40,21 @@ space<T, SD, D>& space<T, SD, D>::operator=(space<T, SD, D>&& other)
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO>
+template<class TO, typename>
 space<T, SD, D>::space(const space<TO, SD, D>& other)
 {
     std::copy(other._points.begin(), other._points.end(), _points.begin());
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO>
+template<class TO, typename>
 space<T, SD, D>::space(space<TO, SD, D>&& other)
 {
     std::move(other._points.begin(), other._points.end(), _points.begin());
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO>
+template<class TO, typename>
 space<T, SD, D>& space<T, SD, D>::operator=(const space<TO, SD, D>& other)
 {
     std::copy(other._points.begin(), other._points.end(), _points.begin());
@@ -63,7 +63,7 @@ space<T, SD, D>& space<T, SD, D>::operator=(const space<TO, SD, D>& other)
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO>
+template<class TO, typename>
 space<T, SD, D>& space<T, SD, D>::operator=(space<TO, SD, D>&& other)
 {
     std::move(other._points.begin(), other._points.end(), _points.begin());
@@ -72,21 +72,21 @@ space<T, SD, D>& space<T, SD, D>::operator=(space<TO, SD, D>&& other)
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO, size_t DO>
+template<class TO, size_t DO, typename>
 space<T, SD, D>::space(const space<TO, SD, DO>& other)
 {
     std::copy(other._points.begin(), other._points.end(), _points.begin());
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO, size_t DO>
+template<class TO, size_t DO, typename>
 space<T, SD, D>::space(space<TO, SD, DO>&& other)
 {
     std::move(other._points.begin(), other._points.end(), _points.begin());
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO, size_t DO>
+template<class TO, size_t DO, typename>
 space<T, SD, D>& space<T, SD, D>::operator=(const space<TO, SD, DO>& other)
 {
     std::copy(other._points.begin(), other._points.end(), _points.begin());
@@ -95,7 +95,7 @@ space<T, SD, D>& space<T, SD, D>::operator=(const space<TO, SD, DO>& other)
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO, size_t DO>
+template<class TO, size_t DO, typename>
 space<T, SD, D>& space<T, SD, D>::operator=(space<TO, SD, DO>&& other)
 {
     std::move(other._points.begin(), other._points.end(), _points.begin());
@@ -103,39 +103,70 @@ space<T, SD, D>& space<T, SD, D>::operator=(space<TO, SD, DO>&& other)
     return *this;
 }
 
-
 template<class T, size_t SD, size_t D>
 template<class ...TOS, typename>
-space<T, SD, D>::space(const TOS&... vs) :
-    space({ static_cast<T>(vs)... })
+space<T, SD, D>::space(const TOS&... vs)
 {
+    std::array<T, (SD + 1)*D> coords = { static_cast<T>(vs)... };
+
+    for (size_t p = 0; p < SD + 1; p++)
+    {
+        for (size_t c = 0; c < D; c++)
+        {
+            _points[p][c] = coords[p*D + c];
+        }
+    }
 }
 
 template<class T, size_t SD, size_t D>
 template<class ...TOS, typename>
-space<T, SD, D>::space(TOS&&... vs) :
-    space({ static_cast<T>(vs)... })
+space<T, SD, D>::space(TOS&&... vs)
 {
+    std::array<T, (SD + 1)*D> coords = { static_cast<T>(vs)... };
+
+    for (size_t p = 0; p < SD + 1; p++)
+    {
+        for (size_t c = 0; c < D; c++)
+        {
+            _points[p][c] = std::move(coords[p*D + c]);
+        }
+    }
 }
 
 template<class T, size_t SD, size_t D>
 template<class ...TOS, size_t... DOS, typename>
-space<T, SD, D>::space(const point_type<TOS, DOS>&... vs) :
-    space({ static_cast<point_type<T, D>>(vs)... })
+space<T, SD, D>::space(const point_type<TOS, DOS>&... vs)
 {
+    std::array<point_type<T, D>, SD + 1> points = { static_cast<point_type<T, D>>(vs)... };
+
+    for (size_t p = 0; p < SD + 1; p++)
+    {
+        _points[p] = points[p];
+    }
 }
 
 template<class T, size_t SD, size_t D>
 template<class ...TOS, size_t... DOS, typename>
-space<T, SD, D>::space(point_type<TOS, DOS>&&... vs) :
-    space({ static_cast<point_type<T, D>>(vs)... })
+space<T, SD, D>::space(point_type<TOS, DOS>&&... vs)
 {
+    std::array<point_type<T, D>, SD + 1> points = { static_cast<point_type<T, D>>(vs)... };
+
+    for (size_t p = 0; p < SD + 1; p++)
+    {
+        _points[p] = std::move(points[p]);
+    }
 }
 
 template<class T, size_t SD, size_t D>
 template<class TO, typename>
-space<T, SD, D>::space(std::initializer_list<TO> init_list)
+space<T, SD, D>::space(std::initializer_list<TO> init_list) :
+    space()
 {
+    if (init_list.size() < (SD + 1)*D)
+    {
+        return;
+    }
+
     auto b = init_list.begin();
 
     size_t pt = 0;
@@ -165,8 +196,14 @@ space<T, SD, D>::space(std::initializer_list<TO> init_list)
 
 template<class T, size_t SD, size_t D>
 template<class TO, size_t DO, typename>
-space<T, SD, D>::space(std::initializer_list<point_type<TO, DO>> init_list)
+space<T, SD, D>::space(std::initializer_list<point_type<TO, DO>> init_list) :
+    space()
 {
+    if (init_list.size() < SD + 1)
+    {
+        return;
+    }
+
     auto b = init_list.begin();
 
     size_t pt = 0;
@@ -187,6 +224,11 @@ template<class T, size_t SD, size_t D>
 template<class TO, typename>
 space<T, SD, D>& space<T, SD, D>::operator=(std::initializer_list<TO> init_list)
 {
+    if (init_list.size() < (SD + 1)*D)
+    {
+        return;
+    }
+
     auto b = init_list.begin();
 
     for (auto& pt : _points)
@@ -208,6 +250,11 @@ template<class T, size_t SD, size_t D>
 template<class TO, size_t DO, typename>
 space<T, SD, D>& space<T, SD, D>::operator=(std::initializer_list<point_type<TO, DO>> init_list)
 {
+    if (init_list.size() < SD + 1)
+    {
+        return;
+    }
+
     auto b = init_list.begin();
 
     for (auto& pt : _points)

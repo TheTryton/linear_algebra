@@ -37,36 +37,36 @@ public:
     space<T, SD, D>& operator=(const space<T, SD, D>& other);
     space<T, SD, D>& operator=(space<T, SD, D>&& other);
 
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     space(const space<TO, SD, D>& other);
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     space(space<TO, SD, D>&& other);
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     space<T, SD, D>& operator=(const space<TO, SD, D>& other);
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     space<T, SD, D>& operator=(space<TO, SD, D>&& other);
 
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     space(const space<TO, SD, DO>& other);
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     space(space<TO, SD, DO>&& other);
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     space<T, SD, D>& operator=(const space<TO, SD, DO>& other);
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     space<T, SD, D>& operator=(space<TO, SD, DO>&& other);
 
     //regular constructors
 
-    template<class... TOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...> && sizeof...(TOS) >= (SD + 1)*D>>
+    template<class... TOS, typename = typename std::enable_if_t<(std::is_convertible_v<TOS, T> && ...) && sizeof...(TOS) == (SD + 1)*D>>
     space(const TOS&... vs);
 
-    template<class... TOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...> && sizeof...(TOS) >= (SD + 1)*D>>
+    template<class... TOS, typename = typename std::enable_if_t<(std::is_convertible_v<TOS, T> && ...) && sizeof...(TOS) == (SD + 1)*D>>
     space(TOS&&... vs);
     
-    template<class... TOS, size_t... DOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...> && sizeof...(TOS) >= SD + 1 && ((DOS >= D) && ...)>>
+    template<class... TOS, size_t... DOS, typename = typename std::enable_if_t<(std::is_convertible_v<TOS, T> && ...) && sizeof...(TOS) == SD + 1 && ((DOS >= D) && ...)>>
     space(const point_type<TOS, DOS>&... vs);
 
-    template<class... TOS, size_t... DOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...> && sizeof...(TOS) >= SD + 1 && ((DOS >= D) && ...)>>
+    template<class... TOS, size_t... DOS, typename = typename std::enable_if_t<(std::is_convertible_v<TOS, T> && ...) && sizeof...(TOS) == SD + 1 && ((DOS >= D) && ...)>>
     space(point_type<TOS, DOS>&&... vs);
 
     template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
@@ -108,7 +108,7 @@ public:
     template<class TO, size_t DO>
     space<T, SD, D>& operator=(simplex<TO, SD, DO>&& other);
 public:
-    //vector info and accessors
+    //space info and accessors
 
     point_type<T, D>* data();
     const point_type<T, D>* data() const;

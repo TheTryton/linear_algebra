@@ -27,7 +27,7 @@ std::optional<line_line_intersection<T, D>> intersection(const space<T, 1, D>& s
         equation_system[d][1] = p3p4[d];
     }
 
-    auto result = LINEAR_ALGEBRA::solve_equation_system(equation_system, p3p1);
+    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(equation_system), std::move(p3p1));
 
     if (!result)
     {
@@ -76,7 +76,7 @@ std::optional<line_plane_intersection<T, D>> intersection(const space<T, 1, D>& 
         equation_system[d][2] = p3p5[d];
     }
 
-    auto result = LINEAR_ALGEBRA::solve_equation_system(equation_system, p3p1);
+    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(equation_system), std::move(p3p1));
 
     if (!result)
     {
@@ -133,7 +133,7 @@ std::optional<plane_plane_intersection<T, D>> intersection(const space<T, 2, D>&
         equation_system[d][3] = p4p6[d];
     }
 
-    auto result = LINEAR_ALGEBRA::solve_equation_system(equation_system, p4p1);
+    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(equation_system), std::move(p4p1));
 
     if (!result)
     {
@@ -231,7 +231,7 @@ std::optional<space_space_intersection<T, D, SD1, SD2>> intersection(const space
         }
     }
 
-    auto result = LINEAR_ALGEBRA::solve_equation_system(equation_system, q1p1);
+    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(equation_system), std::move(q1p1));
     
     if (!result)
     {

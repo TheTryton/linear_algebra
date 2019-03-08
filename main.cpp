@@ -2,6 +2,8 @@
 #include "include/geometry2D/geometry2D.hpp"
 #include "include/geometry/primitives/simplex.hpp"
 #include "include/geometry/primitives/simplex.inl"
+#include "include/geometry/primitives/sphere.hpp"
+#include "include/geometry/primitives/sphere.inl"
 #include "include/geometry/projections/projections.hpp"
 #include "include/geometry/projections/projections.inl"
 #include "include/geometry/intersections/intersections.hpp"
@@ -248,6 +250,18 @@ void draw_segment(const geometry2D::segment<double>& segment, std::vector<char>&
 
 int main()
 {
+    using namespace geometry;
+    using namespace geometry::geometry_io;
+
+    sphere<double, 3> circle(
+        point_type<double, 3>(-3, 4, 5),
+        point_type<double, 3>(6, 2, 2),
+        point_type<double, 3>(15, 3, 9),
+        point_type<double, 3>(8, 2, 1)
+    );
+
+    std::cout << circle;
+    std::cin.get();
     geometry::space<double, 1, 2> l1;
     l1[0] = { 1,3 };
     l1[1] = { 3,5 };
@@ -255,7 +269,7 @@ int main()
     l2[0] = { 0,2 };
     l2[1] = { 2,4 };
 
-    using namespace geometry::geometry_io;
+    
     std::cout << l1 << std::endl;
     std::cout << l2 << std::endl;
 

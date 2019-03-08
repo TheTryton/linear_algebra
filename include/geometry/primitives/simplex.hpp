@@ -37,36 +37,36 @@ public:
     simplex<T, SD, D>& operator=(const simplex<T, SD, D>& other);
     simplex<T, SD, D>& operator=(simplex<T, SD, D>&& other);
 
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     simplex(const simplex<TO, SD, D>& other);
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     simplex(simplex<TO, SD, D>&& other);
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     simplex<T, SD, D>& operator=(const simplex<TO, SD, D>& other);
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     simplex<T, SD, D>& operator=(simplex<TO, SD, D>&& other);
 
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     simplex(const simplex<TO, SD, DO>& other);
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     simplex(simplex<TO, SD, DO>&& other);
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     simplex<T, SD, D>& operator=(const simplex<TO, SD, DO>& other);
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     simplex<T, SD, D>& operator=(simplex<TO, SD, DO>&& other);
 
     //regular constructors
 
-    template<class... TOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...> && sizeof...(TOS) >= (SD + 1)*D>>
+    template<class... TOS, typename = typename std::enable_if_t<(std::is_convertible_v<TOS, T> && ...) && sizeof...(TOS) == (SD + 1)*D>>
     simplex(const TOS&... vs);
 
-    template<class... TOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...> && sizeof...(TOS) >= (SD + 1)*D>>
+    template<class... TOS, typename = typename std::enable_if_t<(std::is_convertible_v<TOS, T> && ...) && sizeof...(TOS) == (SD + 1)*D>>
     simplex(TOS&&... vs);
 
-    template<class... TOS, size_t... DOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...> && sizeof...(TOS) >= SD + 1 && ((DOS >= D) && ...)>>
+    template<class... TOS, size_t... DOS, typename = typename std::enable_if_t<(std::is_convertible_v<TOS, T> && ...) && sizeof...(TOS) == SD + 1 && ((DOS >= D) && ...)>>
     simplex(const point_type<TOS, DOS>&... vs);
 
-    template<class... TOS, size_t... DOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...> && sizeof...(TOS) >= SD + 1 && ((DOS >= D) && ...)>>
+    template<class... TOS, size_t... DOS, typename = typename std::enable_if_t<(std::is_convertible_v<TOS, T> && ...) && sizeof...(TOS) == SD + 1 && ((DOS >= D) && ...)>>
     simplex(point_type<TOS, DOS>&&... vs);
 
     template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
@@ -108,7 +108,7 @@ public:
     template<class TO, size_t DO>
     simplex<T, SD, D>& operator=(space<TO, SD, DO>&& other);
 public:
-    //vector info and accessors
+    //simplex info and accessors
 
     point_type<T, D>* data();
     const point_type<T, D>* data() const;

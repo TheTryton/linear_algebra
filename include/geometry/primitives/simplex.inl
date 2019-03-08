@@ -40,21 +40,21 @@ simplex<T, SD, D>& simplex<T, SD, D>::operator=(simplex<T, SD, D>&& other)
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO>
+template<class TO, typename>
 simplex<T, SD, D>::simplex(const simplex<TO, SD, D>& other)
 {
     std::copy(other._points.begin(), other._points.end(), _points.begin());
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO>
+template<class TO, typename>
 simplex<T, SD, D>::simplex(simplex<TO, SD, D>&& other)
 {
     std::move(other._points.begin(), other._points.end(), _points.begin());
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO>
+template<class TO, typename>
 simplex<T, SD, D>& simplex<T, SD, D>::operator=(const simplex<TO, SD, D>& other)
 {
     std::copy(other._points.begin(), other._points.end(), _points.begin());
@@ -63,7 +63,7 @@ simplex<T, SD, D>& simplex<T, SD, D>::operator=(const simplex<TO, SD, D>& other)
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO>
+template<class TO, typename>
 simplex<T, SD, D>& simplex<T, SD, D>::operator=(simplex<TO, SD, D>&& other)
 {
     std::move(other._points.begin(), other._points.end(), _points.begin());
@@ -72,21 +72,21 @@ simplex<T, SD, D>& simplex<T, SD, D>::operator=(simplex<TO, SD, D>&& other)
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO, size_t DO>
+template<class TO, size_t DO, typename>
 simplex<T, SD, D>::simplex(const simplex<TO, SD, DO>& other)
 {
     std::copy(other._points.begin(), other._points.end(), _points.begin());
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO, size_t DO>
+template<class TO, size_t DO, typename>
 simplex<T, SD, D>::simplex(simplex<TO, SD, DO>&& other)
 {
     std::move(other._points.begin(), other._points.end(), _points.begin());
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO, size_t DO>
+template<class TO, size_t DO, typename>
 simplex<T, SD, D>& simplex<T, SD, D>::operator=(const simplex<TO, SD, DO>& other)
 {
     std::copy(other._points.begin(), other._points.end(), _points.begin());
@@ -95,7 +95,7 @@ simplex<T, SD, D>& simplex<T, SD, D>::operator=(const simplex<TO, SD, DO>& other
 }
 
 template<class T, size_t SD, size_t D>
-template<class TO, size_t DO>
+template<class TO, size_t DO, typename>
 simplex<T, SD, D>& simplex<T, SD, D>::operator=(simplex<TO, SD, DO>&& other)
 {
     std::move(other._points.begin(), other._points.end(), _points.begin());
@@ -105,36 +105,68 @@ simplex<T, SD, D>& simplex<T, SD, D>::operator=(simplex<TO, SD, DO>&& other)
 
 template<class T, size_t SD, size_t D>
 template<class ...TOS, typename>
-simplex<T, SD, D>::simplex(const TOS&... vs) :
-    simplex({ static_cast<T>(vs)... })
+simplex<T, SD, D>::simplex(const TOS&... vs)
 {
+    std::array<T, (SD + 1)*D> coords = { static_cast<T>(vs)... };
+
+    for (size_t p = 0; p < SD + 1; p++)
+    {
+        for (size_t c = 0; c < D; c++)
+        {
+            _points[p][c] = coords[p*D + c];
+        }
+    }
 }
 
 template<class T, size_t SD, size_t D>
 template<class ...TOS, typename>
-simplex<T, SD, D>::simplex(TOS&&... vs) :
-    simplex({ static_cast<T>(vs)... })
+simplex<T, SD, D>::simplex(TOS&&... vs)
 {
+    std::array<T, (SD + 1)*D> coords = { static_cast<T>(vs)... };
+
+    for (size_t p = 0; p < SD + 1; p++)
+    {
+        for (size_t c = 0; c < D; c++)
+        {
+            _points[p][c] = std::move(coords[p*D + c]);
+        }
+    }
 }
 
 template<class T, size_t SD, size_t D>
 template<class ...TOS, size_t... DOS, typename>
-simplex<T, SD, D>::simplex(const point_type<TOS, DOS>&... vs) :
-    simplex({ static_cast<point_type<T, D>>(vs)... })
+simplex<T, SD, D>::simplex(const point_type<TOS, DOS>&... vs)
 {
+    std::array<point_type<T, D>, SD + 1> points = { static_cast<point_type<T, D>>(vs)... };
+
+    for (size_t p = 0; p < SD + 1; p++)
+    {
+        _points[p] = points[p];
+    }
 }
 
 template<class T, size_t SD, size_t D>
 template<class ...TOS, size_t... DOS, typename>
-simplex<T, SD, D>::simplex(point_type<TOS, DOS>&&... vs) :
-    simplex({ static_cast<point_type<T, D>>(vs)... })
+simplex<T, SD, D>::simplex(point_type<TOS, DOS>&&... vs)
 {
+    std::array<point_type<T, D>, SD + 1> points = { static_cast<point_type<T, D>>(vs)... };
+
+    for (size_t p = 0; p < SD + 1; p++)
+    {
+        _points[p] = std::move(points[p]);
+    }
 }
 
 template<class T, size_t SD, size_t D>
 template<class TO, typename>
-simplex<T, SD, D>::simplex(std::initializer_list<TO> init_list)
+simplex<T, SD, D>::simplex(std::initializer_list<TO> init_list) :
+    simplex()
 {
+    if (init_list.size() < (SD + 1)*D)
+    {
+        return;
+    }
+
     auto b = init_list.begin();
 
     size_t pt = 0;
@@ -164,8 +196,14 @@ simplex<T, SD, D>::simplex(std::initializer_list<TO> init_list)
 
 template<class T, size_t SD, size_t D>
 template<class TO, size_t DO, typename>
-simplex<T, SD, D>::simplex(std::initializer_list<point_type<TO, DO>> init_list)
+simplex<T, SD, D>::simplex(std::initializer_list<point_type<TO, DO>> init_list) :
+    simplex()
 {
+    if (init_list.size() < SD + 1)
+    {
+        return;
+    }
+
     auto b = init_list.begin();
 
     size_t pt = 0;
@@ -186,6 +224,11 @@ template<class T, size_t SD, size_t D>
 template<class TO, typename>
 simplex<T, SD, D>& simplex<T, SD, D>::operator=(std::initializer_list<TO> init_list)
 {
+    if (init_list.size() < (SD + 1)*D)
+    {
+        return;
+    }
+
     auto b = init_list.begin();
 
     for(auto& pt : _points)
@@ -207,6 +250,11 @@ template<class T, size_t SD, size_t D>
 template<class TO, size_t DO, typename>
 simplex<T, SD, D>& simplex<T, SD, D>::operator=(std::initializer_list<point_type<TO, DO>> init_list)
 {
+    if (init_list.size() < SD + 1)
+    {
+        return;
+    }
+
     auto b = init_list.begin();
 
     for (auto& pt : _points)
@@ -496,7 +544,7 @@ bool simplex<T, SD, D>::contains(const point_type<T, D>& p) const
         }
     }
 
-    auto result = LINEAR_ALGEBRA::solve_equation_system(coefficents, v1p);
+    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(coefficents), std::move(v1p));
 
     if(!result)
     {
@@ -532,6 +580,8 @@ bool simplex<T, SD, D>::contains(const point_type<T, D>& p) const
             return false;
         }
     }
+
+    return false;
 }
 
 NAMESPACE_GEOMETRY_IO_BEGIN

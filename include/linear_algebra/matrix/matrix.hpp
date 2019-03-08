@@ -199,7 +199,7 @@ public:
 
     //different type, same dimension
 
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix(const matrix<TO, N, M>& other)
     {
         /*
@@ -217,7 +217,7 @@ public:
         }
     }
 
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix(matrix<TO, N, M>&& other)
     {
         /*
@@ -235,7 +235,7 @@ public:
         }
     }
 
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix<T, N, M>& operator=(const matrix<TO, N, M>& other)
     {
         /*
@@ -255,7 +255,7 @@ public:
         return *this;
     }
     
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix<T, N, M>& operator=(matrix<TO, N, M>&& other)
     {
         /*
@@ -277,7 +277,7 @@ public:
 
     //different type, different dimensions
 
-    template<class TO, size_t NO, size_t MO>
+    template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix(const matrix<TO, NO, MO>& other)
     {
         constexpr size_t N_min = NO > N ? N : NO;
@@ -333,7 +333,7 @@ public:
         }
     }
 
-    template<class TO, size_t NO, size_t MO>
+    template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix(matrix<TO, NO, MO>&& other)
     {
         constexpr size_t N_min = NO > N ? N : NO;
@@ -389,7 +389,7 @@ public:
         }
     }
 
-    template<class TO, size_t NO, size_t MO>
+    template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix<T, N, M>& operator=(const matrix<TO, NO, MO>& other)
     {
         constexpr size_t N_min = NO > N ? N : NO;
@@ -399,14 +399,14 @@ public:
         {
             for (size_t column = 0; column < M_min; column++)
             {
-                _mat[row][column] = other._mat[row][column];
+                _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
 
         return *this;
     }
 
-    template<class TO, size_t NO, size_t MO>
+    template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix<T, N, M>& operator=(matrix<TO, NO, MO>&& other)
     {
         constexpr size_t N_min = NO > N ? N : NO;
@@ -416,7 +416,7 @@ public:
         {
             for (size_t column = 0; column < M_min; column++)
             {
-                _mat[row][column] = other._mat[row][column];
+                _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
 
@@ -425,6 +425,7 @@ public:
 
     //regular constructors
 
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     matrix(const T& v)
     {
         //initializes all matrix elements with value v
@@ -433,19 +434,36 @@ public:
         {
             for (size_t column = 0; column < M; column++)
             {
-                _mat[row][column] = v;
+                _mat[row][column] = static_cast<T>(v);
             }
         }
     }
 
-    template<class... TOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...>>>
-    matrix(const TOS&... vs) :
-        matrix({ static_cast<T>(vs)... })
+    template<class... TOS, typename = typename std::enable_if_t<(sizeof...(TOS) > 1) && (std::is_convertible_v<TOS, T> && ...)>>
+    matrix(const TOS&... vs)
     {
-        //convert variadic parameter list to initializer_list
+        std::array<T, sizeof...(TOS)> elements = { static_cast<T>(vs)... };
+
+        constexpr size_t DM = sizeof...(T) > N*M ? N * M : sizeof...(T);
+
+        for (size_t row = 0; row < N; row++)
+        {
+            for (size_t column = 0; column < M; column++)
+            {
+                if(row*column < sizeof...(T))
+                {
+                    _mat[row][column] = elements[row*M + column];
+                }
+                else
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+        }
     }
 
-    matrix(T&& v)
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
+    matrix(TO&& v)
     {
         //initializes all matrix elements with value v
 
@@ -453,16 +471,32 @@ public:
         {
             for (size_t column = 0; column < M; column++)
             {
-                _mat[row][column] = v;
+                _mat[row][column] = static_cast<T>(v);
             }
         }
     }
     
-    template<class... TOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...>>>
-    matrix(TOS&&... vs) :
-        matrix({ static_cast<T>(vs)... })
+    template<class... TOS, typename = typename std::enable_if_t<(sizeof...(TOS) > 1) && (std::is_convertible_v<TOS, T> && ...)>>
+    matrix(TOS&&... vs)
     {
-        //convert variadic parameter list to initializer_list
+        std::array<T, sizeof...(TOS)> elements = { static_cast<T>(vs)... };
+
+        constexpr size_t DM = sizeof...(T) > N*M ? N * M : sizeof...(T);
+
+        for (size_t row = 0; row < N; row++)
+        {
+            for (size_t column = 0; column < M; column++)
+            {
+                if (row*column < sizeof...(T))
+                {
+                    _mat[row][column] = std::move(elements[row*M + column]);
+                }
+                else
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+        }
     }
 
     matrix(std::initializer_list<T> vs)
@@ -557,7 +591,8 @@ public:
 
     //regular operators
 
-    matrix<T, N, M>& operator=(const T& v)
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
+    matrix<T, N, M>& operator=(const TO& v)
     {
         //initializes all matrix elements with value v
 
@@ -565,14 +600,15 @@ public:
         {
             for (size_t column = 0; column < M; column++)
             {
-                _mat[row][column] = v;
+                _mat[row][column] = static_cast<T>(v);
             }
         }
 
         return *this;
     }
 
-    matrix<T, N, M>& operator=(T&& v)
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
+    matrix<T, N, M>& operator=(TO&& v)
     {
         //initializes all matrix elements with value v
 
@@ -580,7 +616,7 @@ public:
         {
             for (size_t column = 0; column < M; column++)
             {
-                _mat[row][column] = v;
+                _mat[row][column] = static_cast<T>(v);
             }
         }
 
@@ -1033,7 +1069,7 @@ public:
     }
 
     template<typename = typename std::enable_if_t<N == M>>
-    std::optional<matrix<T, N, M>> inversed() const
+    std::optional<matrix<T, N, M>> inverted() const
     {
         constexpr size_t S = N;
 
@@ -1302,6 +1338,9 @@ public:
 
     template<class T, size_t N, size_t M>
     friend std::optional<equation_system_solution<T, M>> solve_equation_system(const matrix<T, N, M>& coefficents, const vector<T, N>& constant_terms);
+
+    template<class T, size_t N, size_t M>
+    friend std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N, M>&& coefficents, vector<T, N>&& constant_terms);
 };
 
 template<class TO, size_t NO, size_t MO>

@@ -42,7 +42,7 @@ std::optional<point_type<T, D>> project(const space<T, SD, D>& s, const point_ty
         return v1p * v;
     });
 
-    auto inverse = equation_system.inversed();
+    auto inverse = equation_system.inverted();
     if(!inverse)
     {
         std::nullopt;

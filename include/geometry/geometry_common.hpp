@@ -75,4 +75,13 @@ using triangle = simplex<T, 2, D>;
 template<class T, size_t D>
 using tetrahedron = simplex<T, 3, D>;
 
+///<summary>
+/// {D}-dimensional sphere in {D}-dimensional vector space (T as underlying mathematical field)
+/// <para>*** TEMPLATE PARAMETERS ***</para>
+/// <para>T - underlying arithmetic type (underlying mathematical field type for vectors and points)</para>
+/// <para>D - dimension of sphere and vector space in which sphere is given </para>
+///</summary>
+template<class T, size_t D>
+class sphere;
+
 NAMESPACE_GEOMETRY_END

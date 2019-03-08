@@ -27,6 +27,8 @@ set(linear_algebra_Sources
     include/geometry/primitives/space.inl
     include/geometry/primitives/simplex.hpp
     include/geometry/primitives/simplex.inl
+    include/geometry/primitives/sphere.hpp
+    include/geometry/primitives/sphere.inl
 
     include/geometry/projections/projections.hpp
     include/geometry/projections/projections.inl

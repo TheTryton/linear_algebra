@@ -185,7 +185,7 @@ public:
 
     //different type, same dimensions
 
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     vector(const vector<TO, D>& other)
     {
         /*
@@ -199,7 +199,7 @@ public:
         });
     }
 
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     vector(vector<TO, D>&& other)
     {
         /*
@@ -213,7 +213,7 @@ public:
         });
     }
     
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     vector<T, D>& operator=(const vector<TO, D>& other)
     {
         /*
@@ -229,7 +229,7 @@ public:
         return *this;
     }
 
-    template<class TO>
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     vector<T, D>& operator=(vector<TO, D>&& other)
     {
         /*
@@ -247,7 +247,7 @@ public:
 
     //different type, different dimensions
 
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     vector(const vector<TO, DO>& other)
     {
         /*
@@ -266,7 +266,7 @@ public:
         std::fill(_coords.begin() + DM, _coords.end(), static_cast<T>(0));
     }
 
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     vector(vector<TO, DO>&& other)
     {
         /*
@@ -285,7 +285,7 @@ public:
         std::fill(_coords.begin() + DM, _coords.end(), static_cast<T>(0));
     }
 
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     vector<T, D>& operator=(const vector<TO, DO>& other)
     {
         /*
@@ -303,7 +303,7 @@ public:
         return *this;
     }
 
-    template<class TO, size_t DO>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
     vector<T, D>& operator=(vector<TO, DO>&& other)
     {
         /*
@@ -323,30 +323,44 @@ public:
 
     //regular constructors
     
-    vector(const T& v)
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
+    vector(const TO& v)
     {
         //initializes all vector elements with value v
 
-        std::fill(_coords.begin(), _coords.end(), v);
+        std::fill(_coords.begin(), _coords.end(), static_cast<T>(v));
     }
 
-    template<class... TOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...>>>
-    vector(const TOS&... vs) :
-        vector({ static_cast<T>(vs)... })
+    template<class... TOS, typename = typename std::enable_if_t<(sizeof...(TOS) > 1) && (std::is_convertible_v<TOS, T> && ...)>>
+    vector(const TOS&... vs)
     {
+        constexpr size_t DM = sizeof...(TOS) > D ? D : sizeof...(TOS);
+
+        std::array<T, sizeof...(TOS)> coords = { static_cast<T>(vs)... };
+
+        std::copy(coords.begin(), coords.begin() + DM, _coords.begin());
+
+        std::fill(_coords.begin() + DM, _coords.end(), static_cast<T>(0));
     }
 
-    vector(T&& v)
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
+    vector(TO&& v)
     {
         //initializes all vector elements with value v
 
-        std::fill(_coords.begin(), _coords.end(), v);
+        std::fill(_coords.begin(), _coords.end(), static_cast<T>(v));
     }
     
-    template<class... TOS, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<TOS, T>...>>>
-    vector(TOS&&... vs) :
-        vector({ static_cast<T>(vs)... })
+    template<class... TOS, typename = typename std::enable_if_t<(sizeof...(TOS) > 1) && (std::is_convertible_v<TOS, T> && ...)>>
+    vector(TOS&&... vs) 
     {
+        constexpr size_t DM = sizeof...(TOS) > D ? D : sizeof...(TOS);
+
+        std::array<T, sizeof...(TOS)> coords = { static_cast<T>(vs)... };
+
+        std::copy(coords.begin(), coords.begin() + DM, _coords.begin());
+
+        std::fill(_coords.begin() + DM, _coords.end(), static_cast<T>(0));
     }
     
     vector(std::initializer_list<T> init_list)
@@ -364,20 +378,22 @@ public:
 
     //regular operators
 
-    vector<T, D>& operator=(const T& v)
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
+    vector<T, D>& operator=(const TO& v)
     {
         //initializes all vector elements with value v
 
-        std::fill(_coords.begin(), _coords.end(), v);
+        std::fill(_coords.begin(), _coords.end(), static_cast<T>(v));
 
         return *this;
     }
 
-    vector<T, D>& operator=(T&& v)
+    template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
+    vector<T, D>& operator=(TO&& v)
     {
         //initializes all vector elements with value v
 
-        std::fill(_coords.begin(), _coords.end(), v);
+        std::fill(_coords.begin(), _coords.end(), static_cast<T>(v));
 
         return *this;
     }
