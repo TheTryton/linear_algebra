@@ -3,6 +3,8 @@
 #include "intersections.hpp"
 #include "../primitives/simplex.inl"
 #include "../primitives/space.inl"
+#include "../primitives/sphere.inl"
+#include "../projections/projections.inl"
 
 NAMESPACE_GEOMETRY_BEGIN
 
@@ -177,7 +179,7 @@ std::optional<plane_plane_intersection<T, D>> intersection(const space<T, 2, D>&
 
 //space-space
 template<class T, size_t D, size_t SD1, size_t SD2, size_t SD>
-space_space_intersection<T, D, SD1, SD2> get_result(std::vector<point_type<T, D>>&& points)
+space_space_intersection<T, D, SD1, SD2> get_result_intersection(std::vector<point_type<T, D>>&& points)
 {
     if constexpr (SD == 0)
     {
@@ -193,7 +195,7 @@ space_space_intersection<T, D, SD1, SD2> get_result(std::vector<point_type<T, D>
         }
         else
         {
-            return get_result<T, D, SD1, SD2, SD - 1>(std::forward<std::vector<point_type<T, D>>>(points));
+            return get_result_intersection<T, D, SD1, SD2, SD - 1>(std::forward<std::vector<point_type<T, D>>>(points));
         }
     }
 }
@@ -289,7 +291,7 @@ std::optional<space_space_intersection<T, D, SD1, SD2>> intersection(const space
                             std::inner_product(res.second[i - 1].begin() + SD1, res.second[i - 1].end(), v2s.begin(), point_type<T, D>());
                     }
 
-                    return get_result<T, D, SD1, SD2, SD1>(std::move(points));
+                    return get_result_intersection<T, D, SD1, SD2, SD1>(std::move(points));
                 }
                 if constexpr (SD1 > SD2)
                 {
@@ -302,11 +304,59 @@ std::optional<space_space_intersection<T, D, SD1, SD2>> intersection(const space
                             std::inner_product(res.second[i - 1].begin() + SD1, res.second[i - 1].end(), v2s.begin(), point_type<T, D>());
                     }
 
-                    return get_result<T, D, SD1, SD2, SD2>(std::move(points));
+                    return get_result_intersection<T, D, SD1, SD2, SD2>(std::move(points));
                 }
             }
         }
     }
+}
+
+//space-sphere
+template<class T, size_t SD, size_t D>
+std::optional<space_sphere_intersection<T, SD, D>> intersection(const space<T, SD, D>& s1, const sphere<T, D>& s2)
+{
+    auto po = PROJECTIONS::project(s1, s2.center());
+    if(!po)
+    {
+        return std::nullopt;
+    }
+
+    auto& p = *po;
+
+    auto d2 = (p - s2.center()).length_sqr();
+    auto r2 = s2.radius() * s2.radius();
+
+    if(d2 > r2)
+    {
+        return std::nullopt;
+    }
+    else if (LINEAR_ALGEBRA::equal(d2, r2))
+    {
+        return p;
+    }
+    else
+    {
+        auto l = std::sqrt(r2 - d2);
+
+        std::array<point_type<T, D>, SD + 1> points;
+
+        std::transform(s1.begin() + 1, s1.end(), points.begin(), [&p, &l, &s1](const point_type<T, D>& pt) {
+            auto v = pt - s1[0];
+            v.normalize();
+            v *= l;
+            return p + v;
+        });
+
+        points.back() = static_cast<T>(2) * p - points[0];
+
+        return points;
+    }
+}
+
+template<class T, size_t SD, size_t D>
+std::optional<space_sphere_intersection<T, SD, D>> intersection(const sphere<T, D>& s1, const space<T, SD, D>& s2)
+{
+    return intersection(s2, s1);
 }
 
 NAMESPACE_INTERSECTIONS_END

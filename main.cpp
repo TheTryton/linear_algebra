@@ -8,6 +8,8 @@
 #include "include/geometry/projections/projections.inl"
 #include "include/geometry/intersections/intersections.hpp"
 #include "include/geometry/intersections/intersections.inl"
+#include "include/geometry/generalized_vector_product/generalized_vector_product.hpp"
+#include "include/geometry/generalized_vector_product/generalized_vector_product.inl"
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -61,10 +63,29 @@ namespace geometry3D_renderer
 
     void draw_triangle(const geometry::triangle<double, 3>& tri, std::vector<char>& surface, size_t width, size_t height)
     {
-        auto x_min = std::min({ tri[0][0], tri[1][0], tri[2][0] });
-        auto x_max = std::max({ tri[0][0], tri[1][0], tri[2][0] });
-        auto y_min = std::min({ tri[0][1], tri[1][1], tri[2][1] });
-        auto y_max = std::max({ tri[0][1], tri[1][1], tri[2][1] });
+        geometry::space<double, 2, 3> screen(
+            geometry::point_type<double, 3>(0, 0, 0),
+            geometry::point_type<double, 3>(width, 0, 0),
+            geometry::point_type<double, 3>(0, height, 0)
+        );
+
+        auto p1o = geometry::projections::project(tri[0], screen);
+        auto p2o = geometry::projections::project(tri[1], screen);
+        auto p3o = geometry::projections::project(tri[2], screen);
+
+        if (!p1o || !p2o || !p3o)
+            return;
+
+        auto p1 = *p1o;
+        auto p2 = *p2o;
+        auto p3 = *p3o;
+
+        auto tri3D = geometry::triangle<double, 3>(p1, p2, p3);
+
+        auto x_min = std::min({ tri3D[0][0], tri3D[1][0], tri3D[2][0] });
+        auto x_max = std::max({ tri3D[0][0], tri3D[1][0], tri3D[2][0] });
+        auto y_min = std::min({ tri3D[0][1], tri3D[1][1], tri3D[2][1] });
+        auto y_max = std::max({ tri3D[0][1], tri3D[1][1], tri3D[2][1] });
 
         if (x_min > width - 1 || x_max < 0 || y_min > height - 1 || y_max < 0)
             return;
@@ -74,20 +95,23 @@ namespace geometry3D_renderer
         uint32_t y_s = std::max(int32_t(0), (int32_t)(std::floor(y_min)));
         uint32_t y_e = std::min(int32_t(height) - 1, (int32_t)(std::floor(y_max)));
 
-        auto tri2D = geometry::triangle<double, 2>(tri);
-
         for (size_t x = x_s; x <= x_e; x++)
         {
             for (size_t y = y_s; y <= y_e; y++)
             {
                 point3D p = point3D(x, y);
-                if (tri2D.contains(p))
+                if (tri3D.contains(p))
                 {
-                    auto& p1 = tri[0];
-                    auto& p2 = tri[1];
-                    auto& p3 = tri[2];
+                    auto& p1 = tri3D[0];
+                    auto& p2 = tri3D[1];
+                    auto& p3 = tri3D[2];
+
+                    auto d1 = (tri3D[0] - tri[0]).length();
+                    auto d2 = (tri3D[1] - tri[1]).length();
+                    auto d3 = (tri3D[2] - tri[2]).length();
 
                     //BARCENTRIC
+                    
                     auto w1 =
                         ((p2[1] - p3[1]) * (p[0] - p3[0]) + (p3[0] - p2[0]) * (p[1] - p3[1])) /
                         ((p2[1] - p3[1]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[1] - p3[1]));
@@ -96,26 +120,32 @@ namespace geometry3D_renderer
                         ((p2[1] - p3[1]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[1] - p3[1]));
                     auto w3 = 1.0f - w1 - w2;
 
-                    auto color = (tri[0][2] * w1 + tri[1][2] * w2 + tri[2][2] * w3) / (w1 + w2 + w3);
+                    //LINEAR
+                    /*
+                    auto w1 = 1.0 / (p - p1).length();
+                    auto w2 = 1.0 / (p - p2).length();
+                    auto w3 = 1.0 / (p - p3).length();*/
 
-                    if (color < 1)
+                    auto color = (d1 * w1 + d2 * w2 + d3 * w3) / (w1 + w2 + w3);
+
+                    if (color < 10)
                     {
                         surface[y*width + x] = '#';
                     }
-                    else if (color < 3)
+                    else
                     {
                         if(surface[y*width + x] != '#')
                         {
                             surface[y*width + x] = char(176);
                         }
                     }
-                    else
+                    /*else
                     {
                         if (surface[y*width + x] != '#' && surface[y*width + x] != char(176))
                         {
                             surface[y*width + x] = '.';
                         }
-                    }
+                    }*/
                 }
             }
         }
@@ -253,14 +283,41 @@ int main()
     using namespace geometry;
     using namespace geometry::geometry_io;
 
-    sphere<double, 3> circle(
-        point_type<double, 3>(-3, 4, 5),
-        point_type<double, 3>(6, 2, 2),
-        point_type<double, 3>(15, 3, 9),
-        point_type<double, 3>(8, 2, 1)
+    sphere<double, 2> circle(
+        point_type<double, 2>(-1, 0),
+        point_type<double, 2>(1, 0),
+        point_type<double, 2>(0, 1)
     );
 
-    std::cout << circle;
+    std::cout << circle << std::endl;
+
+    space<double, 1, 2> line(point_type<double, 2>(-20, 0), point_type<double, 2>(20, 0));
+
+    std::cout << line << std::endl;
+
+    auto res = intersections::intersection(circle, line);
+
+    if(!res)
+    {
+        std::cout << "no intersection" << std::endl;
+    }
+    else
+    {
+        switch(res->index())
+        {
+        case 0:
+            std::cout << std::get<0>(*res) << std::endl;
+            break;
+        case 1:
+            auto& t = std::get<1>(*res);
+            for(auto& e : t)
+            {
+                std::cout << e << std::endl;
+            }
+            break;
+        }
+    }
+
     std::cin.get();
     geometry::space<double, 1, 2> l1;
     l1[0] = { 1,3 };
@@ -317,7 +374,7 @@ int main()
         std::fill(screen.begin(), screen.end(), ' ');
        
         geometry3D_renderer::draw_cube(
-            geometry3D_renderer::point3D(50, 50, 5.0),
+            geometry3D_renderer::point3D(50, 50, 12.0),
             geometry3D_renderer::point3D(10, 10, 10),
             clock() / 1000.0,
             screen,

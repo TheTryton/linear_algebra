@@ -9,20 +9,20 @@ NAMESPACE_INTERSECTIONS_BEGIN
 namespace detail
 {
     template<class T, size_t D, class SD>
-    struct space_space_intersection_type_impl
+    struct space_space_intersection_impl
     {
-        using space_space_intersection_type = geometry::point_type<T, D>;
+        using space_space_intersection_type = point_type<T, D>;
     };
 
     template<class T, size_t D, size_t... SD>
-    struct space_space_intersection_type_impl<T, D, std::index_sequence<SD...>>
+    struct space_space_intersection_impl<T, D, std::index_sequence<SD...>>
     {
-        using space_space_intersection_type = std::variant<geometry::point_type<T, D>, geometry::space<T, SD + 1, D>...>;
+        using space_space_intersection_type = std::variant<point_type<T, D>, space<T, SD + 1, D>...>;
     };
 }
 
 template<class T, size_t D, size_t SD1, size_t SD2>
-using space_space_intersection = typename detail::space_space_intersection_type_impl <
+using space_space_intersection = typename detail::space_space_intersection_impl<
     T,
     D,
     decltype(std::make_index_sequence<
@@ -30,6 +30,8 @@ using space_space_intersection = typename detail::space_space_intersection_type_
     >())
 >::space_space_intersection_type;
 
+template<class T, size_t SD, size_t D>
+using space_sphere_intersection = std::variant<point_type<T, D>, std::array<point_type<T, D>, SD + 1>>;
 
 template<class T, size_t D>
 using line_line_intersection = space_space_intersection<T, D, 1, 1>;
@@ -56,9 +58,15 @@ template<class T, size_t D>
 std::optional<plane_plane_intersection<T, D>> intersection(const space<T, 2, D>& s1, const space<T, 2, D>& s2);
 
 //space-space
-
 template<class T, size_t D, size_t SD1, size_t SD2>
 std::optional<space_space_intersection<T, D, SD1, SD2>> intersection(const space<T, SD1, D>& s1, const space<T, SD2, D>& s2);
+
+//space-sphere
+template<class T, size_t SD, size_t D>
+std::optional<space_sphere_intersection<T, SD, D>> intersection(const space<T, SD, D>& s1, const sphere<T, D>& s2);
+
+template<class T, size_t SD, size_t D>
+std::optional<space_sphere_intersection<T, SD, D>> intersection(const sphere<T, D>& s1, const space<T, SD, D>& s2);
 
 NAMESPACE_INTERSECTIONS_END
 

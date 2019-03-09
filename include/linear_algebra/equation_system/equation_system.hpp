@@ -32,7 +32,7 @@ std::optional<equation_system_solution<T,M>> solve_equation_system(const matrix<
         {
             bool no_non_zero = false;
 
-            while (equal(copy[diag][diag + column_shift], static_cast<T>(0)) && !no_non_zero)
+            while (equal(copy[diag][diag + column_shift], static_cast<T>(0)))
             {
                 size_t non_zero_row = diag;
 
@@ -67,43 +67,35 @@ std::optional<equation_system_solution<T,M>> solve_equation_system(const matrix<
                 break;
 
             T factor = copy[diag][diag + column_shift];
-            if(!equal(factor,static_cast<T>(0)))
+
+            for (size_t column = diag + column_shift; column < M; column++)
             {
-                for (size_t column = diag + column_shift; column < M; column++)
-                {
-                    copy[diag][column] /= factor;
-                }
-                copy_terms[diag] /= factor;
+                copy[diag][column] /= factor;
             }
-            
+            copy_terms[diag] /= factor;
 
             for (size_t reduced_row = 0; reduced_row < diag; reduced_row++)
             {
-                if (!equal(copy._mat[diag][diag + column_shift], static_cast<T>(0)))
+                T factor = copy._mat[reduced_row][diag + column_shift] / copy._mat[diag][diag + column_shift];
+                for (size_t column = diag + column_shift; column < M; column++)
                 {
-                    T factor = copy._mat[reduced_row][diag + column_shift] / copy._mat[diag][diag + column_shift];
-                    for (size_t column = diag + column_shift; column < M; column++)
-                    {
-                        copy._mat[reduced_row][column] -= copy._mat[diag][column] * factor;
-                    }
-
-                    copy_terms[reduced_row] -= copy_terms[diag] * factor;
+                    copy._mat[reduced_row][column] -= copy._mat[diag][column] * factor;
                 }
+
+                copy_terms[reduced_row] -= copy_terms[diag] * factor;
             }
 
             for (size_t reduced_row = diag + 1; reduced_row < N; reduced_row++)
             {
-                if (!equal(copy._mat[diag][diag + column_shift], static_cast<T>(0)))
+
+                T factor = copy._mat[reduced_row][diag + column_shift] / copy._mat[diag][diag + column_shift];
+
+                for (size_t column = diag + column_shift; column < M; column++)
                 {
-                    T factor = copy._mat[reduced_row][diag + column_shift] / copy._mat[diag][diag + column_shift];
-
-                    for (size_t column = diag + column_shift; column < M; column++)
-                    {
-                        copy._mat[reduced_row][column] -= copy._mat[diag][column] * factor;
-                    }
-
-                    copy_terms[reduced_row] -= copy_terms[diag] * factor;
+                    copy._mat[reduced_row][column] -= copy._mat[diag][column] * factor;
                 }
+
+                copy_terms[reduced_row] -= copy_terms[diag] * factor;
             }
         }
 
@@ -156,12 +148,12 @@ std::optional<equation_system_solution<T,M>> solve_equation_system(const matrix<
                 vector<T, M> infinite_solution_vector;
 
                 //variable is treated as parameter
-                infinite_solution_vector[column] = 1;
+                infinite_solution_vector[column] = static_cast<T>(1);
 
                 //creating infinite solution forming vector
                 for (size_t row = 0; row < D; row++)
                 {
-                    if (!equal(copy[row][column], static_cast<T>(0)))
+                    if (!equal(copy[row][column], static_cast<T>(0)) && row != column)
                     {
                         infinite_solution_vector[row] = static_cast<T>(-1)*copy[row][column];
                     }
@@ -177,6 +169,15 @@ std::optional<equation_system_solution<T,M>> solve_equation_system(const matrix<
     return solve_with_gaussian_elimination();
 }
 
+///<summary>
+/// solves linear equations system (N equations, M variables)
+/// <para>*** RESULTS ***</para>
+/// <para>if equation system is contradictory returns nullopt</para>
+/// <para>if equation system is indeterminate returns constant shift vector and set of vectors creating infinite solution set</para>
+/// <para>if equation system is determinate returns solution</para>
+///</summary>
+/// <param name="coefficents"> linear equation system coefficents represented in NxM matrix </param>
+/// <param name="constant_terms"> linear equation system constant terms </param>
 template<class T, size_t N, size_t M>
 std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N, M>&& coefficents, vector<T, N>&& constant_terms)
 {
@@ -191,7 +192,7 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N,
         {
             bool no_non_zero = false;
 
-            while (equal(coefficents[diag][diag + column_shift], static_cast<T>(0)) && !no_non_zero)
+            while (equal(coefficents[diag][diag + column_shift], static_cast<T>(0)))
             {
                 size_t non_zero_row = diag;
 
@@ -226,43 +227,34 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N,
                 break;
 
             T factor = coefficents[diag][diag + column_shift];
-            if (!equal(factor, static_cast<T>(0)))
-            {
-                for (size_t column = diag + column_shift; column < M; column++)
-                {
-                    coefficents[diag][column] /= factor;
-                }
-                constant_terms[diag] /= factor;
-            }
 
+            for (size_t column = diag + column_shift; column < M; column++)
+            {
+                coefficents[diag][column] /= factor;
+            }
+            constant_terms[diag] /= factor;
 
             for (size_t reduced_row = 0; reduced_row < diag; reduced_row++)
             {
-                if (!equal(coefficents._mat[diag][diag + column_shift], static_cast<T>(0)))
+                T factor = coefficents._mat[reduced_row][diag + column_shift] / coefficents._mat[diag][diag + column_shift];
+                for (size_t column = diag + column_shift; column < M; column++)
                 {
-                    T factor = coefficents._mat[reduced_row][diag + column_shift] / coefficents._mat[diag][diag + column_shift];
-                    for (size_t column = diag + column_shift; column < M; column++)
-                    {
-                        coefficents._mat[reduced_row][column] -= coefficents._mat[diag][column] * factor;
-                    }
-
-                    constant_terms[reduced_row] -= constant_terms[diag] * factor;
+                    coefficents._mat[reduced_row][column] -= coefficents._mat[diag][column] * factor;
                 }
+
+                constant_terms[reduced_row] -= constant_terms[diag] * factor;
             }
 
             for (size_t reduced_row = diag + 1; reduced_row < N; reduced_row++)
             {
-                if (!equal(coefficents._mat[diag][diag + column_shift], static_cast<T>(0)))
+                T factor = coefficents._mat[reduced_row][diag + column_shift] / coefficents._mat[diag][diag + column_shift];
+
+                for (size_t column = diag + column_shift; column < M; column++)
                 {
-                    T factor = coefficents._mat[reduced_row][diag + column_shift] / coefficents._mat[diag][diag + column_shift];
-
-                    for (size_t column = diag + column_shift; column < M; column++)
-                    {
-                        coefficents._mat[reduced_row][column] -= coefficents._mat[diag][column] * factor;
-                    }
-
-                    constant_terms[reduced_row] -= constant_terms[diag] * factor;
+                    coefficents._mat[reduced_row][column] -= coefficents._mat[diag][column] * factor;
                 }
+
+                constant_terms[reduced_row] -= constant_terms[diag] * factor;
             }
         }
 
@@ -315,12 +307,12 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N,
                 vector<T, M> infinite_solution_vector;
 
                 //variable is treated as parameter
-                infinite_solution_vector[column] = 1;
+                infinite_solution_vector[column] = static_cast<T>(1);
 
                 //creating infinite solution forming vector
                 for (size_t row = 0; row < D; row++)
                 {
-                    if (!equal(coefficents[row][column], static_cast<T>(0)))
+                    if (!equal(coefficents[row][column], static_cast<T>(0)) && row != column)
                     {
                         infinite_solution_vector[row] = static_cast<T>(-1)*coefficents[row][column];
                     }
@@ -334,49 +326,6 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N,
     };
 
     return solve_with_gaussian_elimination();
-}
-
-template<class T, size_t D, class... TS, typename = typename std::enable_if_t<sizeof...(TS) + 2 == D && (std::is_same_v<T, TS> && ...)>>
-std::optional<vector<T, D>> perpendicular(const vector<T, D>& v, const vector<TS, D>&... vs)
-{
-    std::array<vector<T, D>, D - 2> vectors = { static_cast<vector<T, D>>(vs)... };
-
-    matrix<T, D - 1, D> set_of_vectors;
-
-    for (size_t d = 0; d < D; d++)
-    {
-        set_of_vectors[0][d] = v[d];
-    }
-
-    for (size_t v = 1; v < D - 1; v++)
-    {
-        for (size_t d = 0; d < D; d++)
-        {
-            set_of_vectors[v][d] = vectors[v - 1][d];
-        }
-    }
-
-    vector<T, D - 1> constant_terms;
-
-    auto result = solve_equation_system(set_of_vectors, constant_terms);
-
-    if(!result)
-    {
-        return std::nullopt;
-    }
-    else
-    {
-        auto r = *result;
-
-        if(!r.second.empty())
-        {
-            return r.second[0];
-        }
-        else
-        {
-            return std::nullopt;
-        }
-    }
 }
 
 NAMESPACE_LINEAR_ALGEBRA_END

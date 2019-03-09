@@ -36,6 +36,9 @@ set(linear_algebra_Sources
     include/geometry/intersections/intersections.hpp
     include/geometry/intersections/intersections.inl
 
+    include/geometry/generalized_vector_product/generalized_vector_product.hpp
+    include/geometry/generalized_vector_product/generalized_vector_product.inl
+
     ##2D geometry
 
     include/geometry2D/geometry2D_common.hpp

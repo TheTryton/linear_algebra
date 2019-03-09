@@ -45,7 +45,7 @@ std::optional<point_type<T, D>> project(const space<T, SD, D>& s, const point_ty
     auto inverse = equation_system.inverted();
     if(!inverse)
     {
-        std::nullopt;
+        return std::nullopt;
     }
     else
     {
@@ -53,6 +53,12 @@ std::optional<point_type<T, D>> project(const space<T, SD, D>& s, const point_ty
 
         return std::inner_product(result.begin(), result.end(), simplex_vectors.begin(), s[0]);
     }
+}
+
+template<class T, size_t SD, size_t D>
+std::optional<point_type<T, D>> project(const point_type<T, D>& p, const space<T, SD, D>& s)
+{
+    return project(s, p);
 }
 
 template<class T, size_t SD, size_t D>
@@ -128,6 +134,12 @@ std::optional<point_type<T, D>> closest_point(const simplex<T, SD, D>& s, const 
             }
         }
     }
+}
+
+template<class T, size_t SD, size_t D>
+std::optional<point_type<T, D>> closest_point(const point_type<T, D>& p, const simplex<T, SD, D>& s)
+{
+    return closest_point(s, p);
 }
 
 NAMESPACE_PROJECTIONS_END
