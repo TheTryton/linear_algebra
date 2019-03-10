@@ -47,7 +47,7 @@ std::optional<perpendicular_result<T, D, sizeof...(TOS) + 1>> perpendicular(cons
 
     vector_type<T, K> constant_terms;
 
-    auto result = solve_equation_system(std::move(set_of_vectors), std::move(constant_terms));
+    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(set_of_vectors), std::move(constant_terms));
 
     if (!result)
     {
@@ -83,7 +83,7 @@ std::optional<perpendicular_result<T, D, K>> perpendicular(const std::array<vect
 
     vector_type<T, K> constant_terms;
 
-    auto result = solve_equation_system(std::move(set_of_vectors), std::move(constant_terms));
+    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(set_of_vectors), std::move(constant_terms));
 
     if (!result)
     {

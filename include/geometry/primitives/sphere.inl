@@ -106,7 +106,7 @@ std::optional<std::pair<point_type<T, D>, T>> get_sphere_center_and_radius(std::
 
     for (size_t d = 0; d < D + 1; d++)
     {
-        constant_terms[d] = -points[d].length_sqr();
+        constant_terms[d] = static_cast<T>(-1) * points[d].length_sqr();
     }
 
     auto solution = equation_system.inverted();
@@ -123,13 +123,13 @@ std::optional<std::pair<point_type<T, D>, T>> get_sphere_center_and_radius(std::
 
         for (size_t d = 0; d < D; d++)
         {
-            center[d] = -result[d] / static_cast<T>(2);
+            center[d] = result[d] / static_cast<T>(-2);
             radius += result[d] * result[d];
         }
 
-        radius -= 4 * result[D];
+        radius -= static_cast<T>(4) * result[D];
 
-        radius = std::sqrt(radius) / static_cast<T>(2);
+        radius = LINEAR_ALGEBRA::functions_implementation<T>::sqrt(radius) / static_cast<T>(2);
 
         return std::make_pair(center, radius);
     }

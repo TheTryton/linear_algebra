@@ -716,7 +716,7 @@ public:
 
     inline auto magnitude() const
     {
-        return std::sqrt(magnitude_sqr());
+        return functions_implementation<T>::sqrt(magnitude_sqr());
     }
     inline auto magnitude_sqr() const
     {

@@ -38,4 +38,42 @@ inline bool equal(const T& a, const TO& b)
 template<class T, size_t M>
 using equation_system_solution = std::pair<vector<T, M>, std::vector<vector<T, M>>>;
 
+
+template<class T>
+struct functions_implementation
+{
+    static inline T sqrt(T v)
+    {
+        return T();
+    }
+};
+
+template<>
+struct functions_implementation<float>
+{
+    static inline float sqrt(float v)
+    {
+        return std::sqrt(v);
+    }
+};
+
+template<>
+struct functions_implementation<double>
+{
+    static inline double sqrt(double v)
+    {
+        return std::sqrt(v);
+    }
+};
+
+template<>
+struct functions_implementation<long double>
+{
+    static inline long double sqrt(long double v)
+    {
+        return std::sqrt(v);
+    }
+};
+
+
 NAMESPACE_LINEAR_ALGEBRA_END

@@ -336,7 +336,7 @@ std::optional<space_sphere_intersection<T, SD, D>> intersection(const space<T, S
     }
     else
     {
-        auto l = std::sqrt(r2 - d2);
+        auto l = LINEAR_ALGEBRA::functions_implementation<T>::sqrt(r2 - d2);
 
         std::array<point_type<T, D>, SD + 1> points;
 
