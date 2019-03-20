@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.8)
 project(linear_algebra)
 
+option(USE_OpenMP "Use OpenMP for paralellization" ON)
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(linear_algebra_Sources
@@ -62,6 +64,32 @@ set(linear_algebra_Sources
     include/geometry2D/geometry2D_io.hpp
     include/geometry2D/geometry2D.hpp
 )
+
+if(USE_OpenMP)
+
+    message(STATUS "Searching for OpenMP")
+
+    find_package(OpenMP)
+
+    if (OpenMP_FOUND)
+        message(STATUS "OpenMP found")
+        message(STATUS "OpenMP C version: ${OpenMP_C_VERSION}")
+        message(STATUS "OpenMP C++ version: ${OpenMP_CXX_VERSION}")
+
+        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+        
+        add_compile_definitions(USE_OPENMP=1)
+        add_compile_definitions(OPENMP_VERSION=${OpenMP_CXX_VERSION})
+        add_compile_definitions(OPENMP_VERSION_MINOR=${OpenMP_CXX_VERSION_MINOR})
+        add_compile_definitions(OPENMP_VERSION_MAJOR=${OpenMP_CXX_VERSION_MAJOR})
+    else()
+        message(WARNING "Could not find OpenMP!")
+        message(STATUS "Continuing without usage of OpenMP")
+    endif()
+    
+endif()
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${linear_algebra_Sources})
 
