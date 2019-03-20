@@ -84,7 +84,9 @@ private:
         }
     };
 
-    using storage_type = typename std::conditional_t<(N * M * sizeof(T) >= 80000), matrix_storage_dynamic, matrix_storage_static>;
+    static constexpr bool is_big_matrix = N * M * sizeof(T) >= 80000;
+
+    using storage_type = typename std::conditional_t<is_big_matrix, matrix_storage_dynamic, matrix_storage_static>;
     storage_type _mat;
 public:
     using calculation_type = T;
@@ -94,6 +96,29 @@ public:
     matrix()
     {
         //  filling matrix to initialize it with 0-oes
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -101,6 +126,7 @@ public:
                 _mat[row][column] = static_cast<T>(0);
             }
         }
+#endif
     }
 
     //copy, move constructors and operators
@@ -114,7 +140,29 @@ public:
             matrix NxM elements are copied to 
             elements in matrix MxN
         */
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -122,6 +170,7 @@ public:
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
+#endif
     }
 
     matrix(matrix<T, N, M>&& other)
@@ -133,12 +182,48 @@ public:
 
             move optimization for dynamic storage
         */
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+            if (std::is_same_v<storage_type, matrix_storage_dynamic>)
+            {
+                _mat = std::move(other._mat);
+            }
+            else
+            {
+#pragma omp parallel for
+                for (int row = 0; row < static_cast<int>(N); row++)
+                {
+                    for (size_t column = 0; column < M; column++)
+                    {
+                        _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                    }
+                }
+            }
+        }
+        else
+        {
+            if constexpr (std::is_same_v<storage_type, matrix_storage_dynamic>)
+            {
+                _mat = std::move(other._mat);
+            }
+            else
+            {
+                for (size_t row = 0; row < N; row++)
+                {
+                    for (size_t column = 0; column < M; column++)
+                    {
+                        _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                    }
+                }
+            }
+        }
+#else
         if constexpr (std::is_same_v<storage_type, matrix_storage_dynamic>)
         {
             _mat = std::move(other._mat);
         }
-        if constexpr (!std::is_same_v<storage_type, matrix_storage_dynamic>)
+        else
         {
             for (size_t row = 0; row < N; row++)
             {
@@ -148,6 +233,7 @@ public:
                 }
             }
         }
+#endif
     }
 
     matrix<T, N, M>& operator=(const matrix<T, N, M>& other)
@@ -157,7 +243,29 @@ public:
             matrix NxM elements are copied to
             elements in matrix MxN
         */
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -165,7 +273,7 @@ public:
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
-
+#endif
         return *this;
     }
 
@@ -178,12 +286,48 @@ public:
 
             move optimization for dynamic storage
         */
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+            if (std::is_same_v<storage_type, matrix_storage_dynamic>)
+            {
+                _mat = std::move(other._mat);
+            }
+            else
+            {
+#pragma omp parallel for
+                for (int row = 0; row < static_cast<int>(N); row++)
+                {
+                    for (size_t column = 0; column < M; column++)
+                    {
+                        _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                    }
+                }
+            }
+        }
+        else
+        {
+            if constexpr (std::is_same_v<storage_type, matrix_storage_dynamic>)
+            {
+                _mat = std::move(other._mat);
+            }
+            else
+            {
+                for (size_t row = 0; row < N; row++)
+                {
+                    for (size_t column = 0; column < M; column++)
+                    {
+                        _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                    }
+                }
+            }
+        }
+#else
         if constexpr (std::is_same_v<storage_type, matrix_storage_dynamic>)
         {
             _mat = std::move(other._mat);
         }
-        if constexpr (!std::is_same_v<storage_type, matrix_storage_dynamic>)
+        else
         {
             for (size_t row = 0; row < N; row++)
             {
@@ -193,7 +337,7 @@ public:
                 }
             }
         }
-
+#endif
         return *this;
     }
 
@@ -207,7 +351,29 @@ public:
             matrix NxM elements are copied to
             elements in matrix MxN
         */
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -215,6 +381,7 @@ public:
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
+#endif
     }
 
     template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
@@ -225,7 +392,29 @@ public:
             matrix NxM elements are copied to
             elements in matrix MxN
         */
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -233,6 +422,7 @@ public:
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
+#endif
     }
 
     template<class TO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
@@ -243,7 +433,29 @@ public:
             matrix NxM elements are copied to
             elements in matrix MxN
         */
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -251,7 +463,7 @@ public:
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
-
+#endif
         return *this;
     }
     
@@ -263,7 +475,29 @@ public:
             matrix NxM elements are copied to
             elements in matrix MxN
         */
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -271,7 +505,7 @@ public:
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
-
+#endif
         return *this;
     }
 
@@ -282,7 +516,114 @@ public:
     {
         constexpr size_t N_min = NO > N ? N : NO;
         constexpr size_t M_min = MO > M ? M : MO;
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+            /*
+                filling matrix NxM with matrix NOxMO
+                matrix NOxMO elements are copied to existing
+                elements in matrix MxN (element 0,0 is copied to element 0,0)
+                without getting out of matrix bounds
+            */
 
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N_min); row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+
+            /*
+                case in which other matrix is smaller than this matrix
+                we copy all of the other matrix elements
+                in according places leaveing us with 3 submatrices
+                which are uninitialized
+            */
+
+            //  filling left-bottom submatrix to initialize it with 0-oes
+#pragma omp parallel for
+            for (int row = static_cast<int>(N_min); row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+
+            //  filling right-top submatrix to initialize it with 0-oes
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N_min); row++)
+            {
+                for (size_t column = M_min; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+
+            //  filling bottom-right submatrix to initialize it with 0-oes
+#pragma omp parallel for
+            for (int row = static_cast<int>(N_min); row < static_cast<int>(N); row++)
+            {
+                for (size_t column = M_min; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+        }
+        else
+        {
+            /*
+            filling matrix NxM with matrix NOxMO
+            matrix NOxMO elements are copied to existing
+            elements in matrix MxN (element 0,0 is copied to element 0,0)
+            without getting out of matrix bounds
+        */
+
+            for (size_t row = 0; row < N_min; row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+
+            /*
+                case in which other matrix is smaller than this matrix
+                we copy all of the other matrix elements
+                in according places leaveing us with 3 submatrices
+                which are uninitialized
+            */
+
+            //  filling left-bottom submatrix to initialize it with 0-oes
+            for (size_t row = N_min; row < N; row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+
+            //  filling right-top submatrix to initialize it with 0-oes
+            for (size_t row = 0; row < N_min; row++)
+            {
+                for (size_t column = M_min; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+
+            //  filling bottom-right submatrix to initialize it with 0-oes
+            for (size_t row = N_min; row < N; row++)
+            {
+                for (size_t column = M_min; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+        }
+#else
         /*
             filling matrix NxM with matrix NOxMO
             matrix NOxMO elements are copied to existing
@@ -331,6 +672,7 @@ public:
                 _mat[row][column] = static_cast<T>(0);
             }
         }
+#endif
     }
 
     template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
@@ -338,7 +680,114 @@ public:
     {
         constexpr size_t N_min = NO > N ? N : NO;
         constexpr size_t M_min = MO > M ? M : MO;
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+            /*
+                filling matrix NxM with matrix NOxMO
+                matrix NOxMO elements are copied to existing
+                elements in matrix MxN (element 0,0 is copied to element 0,0)
+                without getting out of matrix bounds
+            */
 
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N_min); row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+
+            /*
+                case in which other matrix is smaller than this matrix
+                we copy all of the other matrix elements
+                in according places leaveing us with 3 submatrices
+                which are uninitialized
+            */
+
+            //  filling left-bottom submatrix to initialize it with 0-oes
+#pragma omp parallel for
+            for (int row = static_cast<int>(N_min); row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+
+            //  filling right-top submatrix to initialize it with 0-oes
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N_min); row++)
+            {
+                for (size_t column = M_min; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+
+            //  filling bottom-right submatrix to initialize it with 0-oes
+#pragma omp parallel for
+            for (int row = static_cast<int>(N_min); row < static_cast<int>(N); row++)
+            {
+                for (size_t column = M_min; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+        }
+        else
+        {
+            /*
+            filling matrix NxM with matrix NOxMO
+            matrix NOxMO elements are copied to existing
+            elements in matrix MxN (element 0,0 is copied to element 0,0)
+            without getting out of matrix bounds
+        */
+
+            for (size_t row = 0; row < N_min; row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+
+            /*
+                case in which other matrix is smaller than this matrix
+                we copy all of the other matrix elements
+                in according places leaveing us with 3 submatrices
+                which are uninitialized
+            */
+
+            //  filling left-bottom submatrix to initialize it with 0-oes
+            for (size_t row = N_min; row < N; row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+
+            //  filling right-top submatrix to initialize it with 0-oes
+            for (size_t row = 0; row < N_min; row++)
+            {
+                for (size_t column = M_min; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+
+            //  filling bottom-right submatrix to initialize it with 0-oes
+            for (size_t row = N_min; row < N; row++)
+            {
+                for (size_t column = M_min; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(0);
+                }
+            }
+        }
+#else
         /*
             filling matrix NxM with matrix NOxMO
             matrix NOxMO elements are copied to existing
@@ -387,6 +836,7 @@ public:
                 _mat[row][column] = static_cast<T>(0);
             }
         }
+#endif
     }
 
     template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T>>>
@@ -394,7 +844,29 @@ public:
     {
         constexpr size_t N_min = NO > N ? N : NO;
         constexpr size_t M_min = MO > M ? M : MO;
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N_min); row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N_min; row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N_min; row++)
         {
             for (size_t column = 0; column < M_min; column++)
@@ -402,7 +874,7 @@ public:
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
-
+#endif
         return *this;
     }
 
@@ -411,7 +883,29 @@ public:
     {
         constexpr size_t N_min = NO > N ? N : NO;
         constexpr size_t M_min = MO > M ? M : MO;
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N_min); row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N_min; row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] = static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N_min; row++)
         {
             for (size_t column = 0; column < M_min; column++)
@@ -419,7 +913,7 @@ public:
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
-
+#endif
         return *this;
     }
 
@@ -429,7 +923,29 @@ public:
     matrix(const T& v)
     {
         //initializes all matrix elements with value v
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(v);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(v);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -437,6 +953,7 @@ public:
                 _mat[row][column] = static_cast<T>(v);
             }
         }
+#endif
     }
 
     template<class... TOS, typename = typename std::enable_if_t<(sizeof...(TOS) > 1) && (std::is_convertible_v<TOS, T> && ...)>>
@@ -466,7 +983,29 @@ public:
     matrix(TO&& v)
     {
         //initializes all matrix elements with value v
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(v);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(v);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -474,6 +1013,7 @@ public:
                 _mat[row][column] = static_cast<T>(v);
             }
         }
+#endif
     }
     
     template<class... TOS, typename = typename std::enable_if_t<(sizeof...(TOS) > 1) && (std::is_convertible_v<TOS, T> && ...)>>
@@ -507,9 +1047,9 @@ public:
 
         size_t row = 0;
         size_t column = 0;
-        for (; row < N; row++, column = 0)
+        for (; row < N; row++)
         {
-            for (; column < M; column++, values++)
+            for (column = 0; column < M; column++, values++)
             {
                 if (values == vs.end())
                 {
@@ -595,7 +1135,29 @@ public:
     matrix<T, N, M>& operator=(const TO& v)
     {
         //initializes all matrix elements with value v
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(v);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(v);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -603,7 +1165,7 @@ public:
                 _mat[row][column] = static_cast<T>(v);
             }
         }
-
+#endif
         return *this;
     }
 
@@ -611,7 +1173,29 @@ public:
     matrix<T, N, M>& operator=(TO&& v)
     {
         //initializes all matrix elements with value v
-
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(v);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] = static_cast<T>(v);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -619,7 +1203,7 @@ public:
                 _mat[row][column] = static_cast<T>(v);
             }
         }
-
+#endif
         return *this;
     }
     
@@ -695,7 +1279,29 @@ public:
         using cm_t = decltype(std::declval<T>() + std::declval<TO>());
 
         matrix<cm_t, N_max, M_max> result(*this);
-
+#if USE_OPENMP
+        if(is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(NO); row++)
+            {
+                for (size_t column = 0; column < MO; column++)
+                {
+                    result._mat[row][column] += other._mat[row][column];
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < NO; row++)
+            {
+                for (size_t column = 0; column < MO; column++)
+                {
+                    result._mat[row][column] += other._mat[row][column];
+                }
+                }
+            }
+#else
         for (size_t row = 0; row < NO; row++)
         {
             for (size_t column = 0; column < MO; column++)
@@ -703,7 +1309,7 @@ public:
                 result._mat[row][column] += other._mat[row][column];
             }
         }
-
+#endif
         return result;
     }
     
@@ -717,6 +1323,29 @@ public:
 
         matrix<cm_t, N_max, M_max> result(*this);
 
+#if USE_OPENMP
+        if(is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(NO); row++)
+            {
+                for (size_t column = 0; column < MO; column++)
+                {
+                    result._mat[row][column] -= other._mat[row][column];
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < NO; row++)
+            {
+                for (size_t column = 0; column < MO; column++)
+                {
+                    result._mat[row][column] -= other._mat[row][column];
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < NO; row++)
         {
             for (size_t column = 0; column < MO; column++)
@@ -724,6 +1353,7 @@ public:
                 result._mat[row][column] -= other._mat[row][column];
             }
         }
+#endif
 
         return result;
     }
@@ -735,6 +1365,47 @@ public:
 
         matrix<cm_t, N, P> result;
 
+#if USE_OPENMP
+        if(is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < P; column++)
+                {
+                    //calculating column-row inner product
+
+                    cm_t inner_product = static_cast<cm_t>(0);
+
+                    for (size_t k = 0; k < M; k++)
+                    {
+                        inner_product += static_cast<cm_t>(_mat[row][k] * other._mat[k][column]);
+                    }
+
+                    result._mat[row][column] = inner_product;
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < P; column++)
+                {
+                    //calculating column-row inner product
+
+                    cm_t inner_product = static_cast<cm_t>(0);
+
+                    for (size_t k = 0; k < M; k++)
+                    {
+                        inner_product += static_cast<cm_t>(_mat[row][k] * other._mat[k][column]);
+                    }
+
+                    result._mat[row][column] = inner_product;
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < P; column++)
@@ -751,6 +1422,7 @@ public:
                 result._mat[row][column] = inner_product;
             }
         }
+#endif
 
         return result;
     }
@@ -761,6 +1433,29 @@ public:
         constexpr size_t N_min = NO > N ? N : NO;
         constexpr size_t M_min = MO > M ? M : MO;
 
+#if USE_OPENMP
+        if(is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N_min); row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] += static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N_min; row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] += static_cast<T>(other._mat[row][column]);
+                }
+                }
+            }
+#else
         for (size_t row = 0; row < N_min; row++)
         {
             for (size_t column = 0; column < M_min; column++)
@@ -768,6 +1463,7 @@ public:
                 _mat[row][column] += static_cast<T>(other._mat[row][column]);
             }
         }
+#endif
 
         return *this;
     }
@@ -775,22 +1471,48 @@ public:
     template<class TO, size_t NO, size_t MO>
     matrix<T, N, M>& operator-=(const matrix<TO, NO, MO>& other)
     {
-        constexpr size_t NN = NO > N ? NO : N;
-        constexpr size_t MM = MO > M ? MO : M;
-        for (size_t x = 0; x < NO; x++)
+        constexpr size_t N_min = NO > N ? N : NO;
+        constexpr size_t M_min = MO > M ? M : MO;
+
+#if USE_OPENMP
+        if(is_big_matrix)
         {
-            for (size_t y = 0; y < MO; y++)
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N_min); row++)
             {
-                _mat[x][y] -= static_cast<T>(other._mat[x][y]);
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] -= static_cast<T>(other._mat[row][column]);
+                }
             }
         }
+        else
+        {
+            for (size_t row = 0; row < N_min; row++)
+            {
+                for (size_t column = 0; column < M_min; column++)
+                {
+                    _mat[row][column] -= static_cast<T>(other._mat[row][column]);
+                }
+            }
+        }
+#else
+        for (size_t row = 0; row < N_min; row++)
+        {
+            for (size_t column = 0; column < M_min; column++)
+            {
+                _mat[row][column] -= static_cast<T>(other._mat[row][column]);
+            }
+        }
+#endif
+
         return *this;
     }
     
     template<class TO, size_t P, typename = typename std::enable_if_t<M == P>>
     matrix<T, N, M>& operator*=(const matrix<TO, M, P>& other)
     {
-        *this = operator*(other);
+        *this = std::move(operator*(other));
         return *this;
     }
 
@@ -800,6 +1522,29 @@ public:
     {
         matrix<T, N, M> result(*this);
 
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    result._mat[row][column] *= static_cast<T>(-1);
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    result._mat[row][column] *= static_cast<T>(-1);
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -807,7 +1552,7 @@ public:
                 result._mat[row][column] *= static_cast<T>(-1);
             }
         }
-
+#endif
         return result;
     }
 
@@ -818,6 +1563,29 @@ public:
 
         matrix<cm_t, N, M> result(*this);
 
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    result._mat[row][column] *= v;
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    result._mat[row][column] *= v;
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -825,7 +1593,7 @@ public:
                 result._mat[row][column] *= v;
             }
         }
-
+#endif
         return result;
     }
     
@@ -836,6 +1604,29 @@ public:
 
         matrix<cm_t, N, M> result(*this);
 
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    result._mat[row][column] /= v;
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    result._mat[row][column] /= v;
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -843,13 +1634,36 @@ public:
                 result._mat[row][column] /= v;
             }
         }
-
+#endif
         return result;
     }
 
     template<class TO, typename = typename std::enable_if_t<std::is_arithmetic_v<TO>>>
     matrix<T, N, M>& operator*=(const TO& v)
     {
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] *= v;
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] *= v;
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -857,12 +1671,35 @@ public:
                 _mat[row][column] *= v;
             }
         }
-
+#endif
         return *this;
     }
     template<class TO, typename = typename std::enable_if_t<std::is_arithmetic_v<TO>>>
     matrix<T, N, M>& operator/=(const TO& v)
     {
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] /= v;
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    _mat[row][column] /= v;
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -870,7 +1707,7 @@ public:
                 _mat[row][column] /= v;
             }
         }
-
+#endif
         return *this;
     }
 
@@ -932,51 +1769,112 @@ public:
 
     //if two matrices with identical dimensions are compared, they are equal only if every corresponding element is equal
     //and inequal if there is one element that is not equal to corresponding one
-
-    template<class TO>
-    bool operator==(const matrix<TO, N, M>& other) const
-    {
-        for (size_t row = 0; row < N; row++)
-        {
-            for (size_t column = 0; column < M; column++)
-            {
-                if (!equal(_mat[row][column], other._mat[row][column]))
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-    
-    template<class TO>
-    bool operator!=(const matrix<TO, N, M>& other) const
-    {
-        for (size_t row = 0; row < N; row++)
-        {
-            for (size_t column = 0; column < M; column++)
-            {
-                if (!equal(_mat[row][column], other._mat[row][column]))
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     //else matrices are always inequal
 
     template<class TO, size_t NO, size_t MO>
     bool operator==(const matrix<TO, NO, MO>& other) const
     {
-        return false;
+        if constexpr (NO == N && MO == M)
+        {
+#if USE_OPENMP
+            if (is_big_matrix)
+            {
+#pragma omp parallel for
+                for (int row = 0; row < static_cast<int>(N); row++)
+                {
+                    for (size_t column = 0; column < M; column++)
+                    {
+                        if (!equal(_mat[row][column], other._mat[row][column]))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (size_t row = 0; row < N; row++)
+                {
+                    for (size_t column = 0; column < M; column++)
+                    {
+                        if (!equal(_mat[row][column], other._mat[row][column]))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+#else
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    if (!equal(_mat[row][column], other._mat[row][column]))
+                    {
+                        return false;
+                    }
+                }
+            }
+#endif
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     
     template<class TO, size_t NO, size_t MO>
     bool operator!=(const matrix<TO, NO, MO>& other) const
     {
-        return true;
+        if constexpr (NO == N && MO == M)
+        {
+#if USE_OPENMP
+            if (is_big_matrix)
+            {
+#pragma omp parallel for
+                for (int row = 0; row < static_cast<int>(N); row++)
+                {
+                    for (size_t column = 0; column < M; column++)
+                    {
+                        if (!equal(_mat[row][column], other._mat[row][column]))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (size_t row = 0; row < N; row++)
+                {
+                    for (size_t column = 0; column < M; column++)
+                    {
+                        if (!equal(_mat[row][column], other._mat[row][column]))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+#else
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    if (!equal(_mat[row][column], other._mat[row][column]))
+                    {
+                        return true;
+                    }
+                }
+            }
+#endif
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 private:
     //helpers
@@ -1046,10 +1944,42 @@ public:
                     return static_cast<T>(0);
                 }
             }
-            
+
             //subtracting this row from rows below in order to obtain 0 in elements
             //below current diagonal element
+#if USE_OPENMP
+            if (is_big_matrix)
+            {
+#pragma omp parallel for
+                for (int row = static_cast<int>(diagonal + 1); row < static_cast<int>(S); row++)
+                {
+                    //factor from equation -> 0 = matrix[row][diagonal] - factor*matrix[diagonal][diagonal] (0 is what we want to get on this element)
+                    T factor = copy._mat[row][diagonal] / copy._mat[diagonal][diagonal];
 
+                    //subtracting diagonal row multiplied by factor from current row
+                    //elements with column < diagonal are already 0 from previous iterations
+                    for (size_t column = diagonal; column < S; column++)
+                    {
+                        copy._mat[row][column] -= copy._mat[diagonal][column] * factor;
+                    }
+                }
+            }
+            else
+            {
+                for (size_t row = diagonal + 1; row < S; row++)
+                {
+                    //factor from equation -> 0 = matrix[row][diagonal] - factor*matrix[diagonal][diagonal] (0 is what we want to get on this element)
+                    T factor = copy._mat[row][diagonal] / copy._mat[diagonal][diagonal];
+
+                    //subtracting diagonal row multiplied by factor from current row
+                    //elements with column < diagonal are already 0 from previous iterations
+                    for (size_t column = diagonal; column < S; column++)
+                    {
+                        copy._mat[row][column] -= copy._mat[diagonal][column] * factor;
+                    }
+                }
+            }
+#else
             for (size_t row = diagonal + 1; row < S; row++)
             {
                 //factor from equation -> 0 = matrix[row][diagonal] - factor*matrix[diagonal][diagonal] (0 is what we want to get on this element)
@@ -1062,7 +1992,7 @@ public:
                     copy._mat[row][column] -= copy._mat[diagonal][column] * factor;
                 }
             }
-
+#endif
             determinant_value *= copy._mat[diagonal][diagonal];
         }
         return determinant_value * determinant_sign;
@@ -1122,6 +2052,72 @@ public:
                 copy._mat[diagonal][column] /= factor;
             }
 
+#if USE_OPENMP
+            if (is_big_matrix)
+            {
+                //subtracting this row from rows above in order to obtain 0 in elements
+                //above current diagonal element
+#pragma omp parallel for
+                for (int row = 0; row < static_cast<int>(diagonal); row++)
+                {
+                    //factor from equation -> 0 = matrix[row][diagonal] - factor*matrix[diagonal][diagonal] (0 is what we want to get on this element)
+                    T factor = copy._mat[row][diagonal] / copy._mat[diagonal][diagonal];
+
+                    //subtracting diagonal row multiplied by factor from current row
+                    //elements with column < diagonal are already 0 from previous iterations
+                    for (size_t column = diagonal; column < S * 2; column++)
+                    {
+                        copy._mat[row][column] -= copy._mat[diagonal][column] * factor;
+                    }
+                }
+                //subtracting this row from rows below in order to obtain 0 in elements
+                //below current diagonal element
+#pragma omp parallel for
+                for (int row = static_cast<int>(diagonal + 1); row < static_cast<int>(S); row++)
+                {
+                    //factor from equation -> 0 = matrix[row][diagonal] - factor*matrix[diagonal][diagonal] (0 is what we want to get on this element)
+                    T factor = copy._mat[row][diagonal] / copy._mat[diagonal][diagonal];
+
+                    //subtracting diagonal row multiplied by factor from current row
+                    //elements with column < diagonal are already 0 from previous iterations
+                    for (size_t column = diagonal; column < S * 2; column++)
+                    {
+                        copy._mat[row][column] -= copy._mat[diagonal][column] * factor;
+                    }
+                }
+            }
+            else
+            {
+                //subtracting this row from rows above in order to obtain 0 in elements
+                //above current diagonal element
+                for (size_t row = 0; row < diagonal; row++)
+                {
+                    //factor from equation -> 0 = matrix[row][diagonal] - factor*matrix[diagonal][diagonal] (0 is what we want to get on this element)
+                    T factor = copy._mat[row][diagonal] / copy._mat[diagonal][diagonal];
+
+                    //subtracting diagonal row multiplied by factor from current row
+                    //elements with column < diagonal are already 0 from previous iterations
+                    for (size_t column = diagonal; column < S * 2; column++)
+                    {
+                        copy._mat[row][column] -= copy._mat[diagonal][column] * factor;
+                    }
+                }
+                //subtracting this row from rows below in order to obtain 0 in elements
+                //below current diagonal element
+                for (size_t row = diagonal + 1; row < S; row++)
+                {
+                    //factor from equation -> 0 = matrix[row][diagonal] - factor*matrix[diagonal][diagonal] (0 is what we want to get on this element)
+                    T factor = copy._mat[row][diagonal] / copy._mat[diagonal][diagonal];
+
+                    //subtracting diagonal row multiplied by factor from current row
+                    //elements with column < diagonal are already 0 from previous iterations
+                    for (size_t column = diagonal; column < S * 2; column++)
+                    {
+                        copy._mat[row][column] -= copy._mat[diagonal][column] * factor;
+                    }
+                }
+            }
+#else
             //subtracting this row from rows above in order to obtain 0 in elements
             //above current diagonal element
             for (size_t row = 0; row < diagonal; row++)
@@ -1150,6 +2146,7 @@ public:
                     copy._mat[row][column] -= copy._mat[diagonal][column] * factor;
                 }
             }
+#endif
         }
 
         //right part of the larger matrix is now our inverse to this matrix
@@ -1297,6 +2294,29 @@ public:
         matrix<T, M, N> result;
 
         //switching columns with rows
+#if USE_OPENMP
+        if (is_big_matrix)
+        {
+#pragma omp parallel for
+            for (int row = 0; row < static_cast<int>(N); row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    result._mat[column][row] = _mat[row][column];
+                }
+            }
+        }
+        else
+        {
+            for (size_t row = 0; row < N; row++)
+            {
+                for (size_t column = 0; column < M; column++)
+                {
+                    result._mat[column][row] = _mat[row][column];
+                }
+            }
+        }
+#else
         for (size_t row = 0; row < N; row++)
         {
             for (size_t column = 0; column < M; column++)
@@ -1304,6 +2324,7 @@ public:
                 result._mat[column][row] = _mat[row][column];
             }
         }
+#endif
 
         return result;
     }
