@@ -10,9 +10,9 @@ class vector
     static_assert(D != 0 , "Vector dimension must be at least 1!");
     static_assert(std::is_arithmetic_v<T>, "Vector element type must be a scalar!");
     static_assert(std::is_default_constructible_v<T>, "Vector element type must be default constructible!");
-    template<class T, size_t D>
+    template<class TO, size_t DO>
     friend class vector;
-    template<class D, size_t N0, size_t M0>
+    template<class T, size_t N, size_t M>
     friend class matrix;
 private:
     class vector_storage_static

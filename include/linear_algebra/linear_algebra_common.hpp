@@ -3,10 +3,11 @@
 #include <type_traits>
 #include <ostream>
 #include <initializer_list>
-#include <optional>
 #include <algorithm>
 #include <numeric>
 #include <vector>
+#include <optional>
+#include <variant>
 
 #define LINEAR_ALGEBRA linear_algebra
 #define NAMESPACE_LINEAR_ALGEBRA_BEGIN namespace LINEAR_ALGEBRA{
@@ -95,7 +96,6 @@ struct functions_implementation<long double>
     }
 };
 
-
 //flag used for indicating if equality comparisons should be performed accurately (i.e abs(a-b)<=epsilon)
 constexpr bool use_high_quality_equality_comparison = false;
 
@@ -119,7 +119,14 @@ class vector;
 template<class T, size_t N, size_t M>
 class matrix;
 
+enum class equation_system_type
+{
+    determinate,
+    indeterminate,
+    contradictory
+};
+
 template<class T, size_t M>
-using equation_system_solution = std::pair<vector<T, M>, std::vector<vector<T, M>>>;
+class equation_system_solution;
 
 NAMESPACE_LINEAR_ALGEBRA_END

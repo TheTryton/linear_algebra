@@ -24,6 +24,7 @@ set(linear_algebra_Sources
     ##n-dimensional geometry
 
     include/geometry/geometry_common.hpp
+    include/geometry/geometry_common.cpp
 
     include/geometry/primitives/space.hpp
     include/geometry/primitives/space.inl

@@ -7,11 +7,11 @@
 NAMESPACE_GEOMETRY_BEGIN
 
 template<class T, size_t D, size_t K, size_t KC>
-std::optional<perpendicular_result<T, D, K>> get_result_perpendicular(std::vector<vector_type<T, D>>&& vectors)
+perpendicular_solution<T, D, K> get_result_perpendicular(std::vector<vector_type<T, D>>&& vectors)
 {
     if constexpr (KC == D - K - 1)
     {
-        return std::nullopt;
+        return perpendicular_solution<T, D, K>(geometry_calculation_error::linearly_dependent_vectors);
     }
     if constexpr (KC != D - K - 1)
     {
@@ -19,7 +19,9 @@ std::optional<perpendicular_result<T, D, K>> get_result_perpendicular(std::vecto
         {
             space<T, KC, D> result;
             std::copy(vectors.begin(), vectors.end(), result.begin() + 1);
-            return result;
+            return perpendicular_solution<T, D, K>(
+                    perpendicular_solution<T, D, K>::perpendicular_result(result)
+                );
         }
         else
         {
@@ -29,7 +31,7 @@ std::optional<perpendicular_result<T, D, K>> get_result_perpendicular(std::vecto
 }
 
 template<class T, size_t D, class... TOS, typename>
-std::optional<perpendicular_result<T, D, sizeof...(TOS) + 1>> perpendicular(const vector_type<T, D>& v, const vector_type<TOS, D>&... vs)
+perpendicular_solution<T, D, sizeof...(TOS) + 1> perpendicular(const vector_type<T, D>& v, const vector_type<TOS, D>&... vs)
 {
     constexpr size_t K = sizeof...(TOS) + 1;
 
@@ -47,29 +49,23 @@ std::optional<perpendicular_result<T, D, sizeof...(TOS) + 1>> perpendicular(cons
 
     vector_type<T, K> constant_terms;
 
-    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(set_of_vectors), std::move(constant_terms));
+    auto equation_system_solution = LINEAR_ALGEBRA::solve_equation_system(std::move(set_of_vectors), std::move(constant_terms));
 
-    if (!result)
+    if (equation_system_solution)
     {
-        return std::nullopt;
-    }
-    else
-    {
-        auto r = *result;
-
-        if (!r.second.empty())
+        if (equation_system_solution.system_type() == LINEAR_ALGEBRA::equation_system_type::indeterminate)
         {
-            return get_result_perpendicular<T, D, K, D - 1> (std::move(r.second));
-        }
-        else
-        {
-            return std::nullopt;
+            return perpendicular_solution<T, D, sizeof...(TOS) + 1>(
+                    get_result_perpendicular<T, D, K, D - 1>(std::move(equation_system_solution.get_indeterminate_solution().infinite_solution_vectors))
+                );
         }
     }
+
+    return perpendicular_solution<T, D, sizeof...(TOS) + 1>(geometry_calculation_error::linearly_dependent_vectors);
 }
 
 template<class T, size_t D, size_t K>
-std::optional<perpendicular_result<T, D, K>> perpendicular(const std::array<vector_type<T, D>, K>& vectors)
+perpendicular_solution<T, D, K> perpendicular(const std::array<vector_type<T, D>, K>& vectors)
 {
     LINEAR_ALGEBRA::matrix<T, K, D> set_of_vectors;
 

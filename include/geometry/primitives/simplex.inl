@@ -544,40 +544,89 @@ bool simplex<T, SD, D>::contains(const point_type<T, D>& p) const
         }
     }
 
-    auto result = LINEAR_ALGEBRA::solve_equation_system(std::move(coefficents), std::move(v1p));
+    auto equation_system_solution = LINEAR_ALGEBRA::solve_equation_system(std::move(coefficents), std::move(v1p));
 
-    if(!result)
+    if(equation_system_solution)
     {
-        return false;
-    }
-    else
-    {
-        auto& res = *result;
-        if(res.second.empty())
+        if (equation_system_solution.system_type() == LINEAR_ALGEBRA::equation_system_type::determinate)
         {
-            auto& r = res.first;
+            auto& determinate_solution = equation_system_solution.get_determinate_solution();
+            
             if constexpr (mode == inclusion_mode::full)
             {
                 return
-                    std::all_of(r.begin(), r.end(), [](const T& v) { return v <= static_cast<T>(1) && v >= static_cast<T>(0); }) &&
-                    std::accumulate(r.begin(), r.end(), static_cast<T>(0)) <= static_cast<T>(1);
+                    std::all_of(
+                        determinate_solution.constant_solution_vector.begin(), 
+                        determinate_solution.constant_solution_vector.end(),
+                        [](const T& v) { return v >= static_cast<T>(0) && v <= static_cast<T>(1); }
+                    ) 
+                    &&
+                    std::accumulate(
+                        determinate_solution.constant_solution_vector.begin(), 
+                        determinate_solution.constant_solution_vector.end(),
+                        static_cast<T>(0)
+                    ) <= static_cast<T>(1);
             }
             if constexpr (mode == inclusion_mode::edgeless)
             {
                 return
-                    std::all_of(r.begin(), r.end(), [](const T& v) {return v < static_cast<T>(1) && v > static_cast<T>(0); }) &&
-                    std::accumulate(r.begin(), r.end(), static_cast<T>(0)) < static_cast<T>(1);
+                    std::all_of(
+                        determinate_solution.constant_solution_vector.begin(),
+                        determinate_solution.constant_solution_vector.end(),
+                        [](const T& v) { return v > static_cast<T>(0) && v < static_cast<T>(1); }
+                    )
+                    &&
+                    std::accumulate(
+                        determinate_solution.constant_solution_vector.begin(),
+                        determinate_solution.constant_solution_vector.end(),
+                        static_cast<T>(0)
+                    ) < static_cast<T>(1);
             }
             if constexpr (mode == inclusion_mode::edge_only)
             {
-                return
-                    std::all_of(r.begin(), r.end(), [](const T& v) {return equal(v, static_cast<T>(1)) && equal(v, static_cast<T>(0)); }) &&
-                    equal(std::accumulate(r.begin(), r.end(), static_cast<T>(0)), static_cast<T>(1));
+                if (std::all_of(
+                        determinate_solution.constant_solution_vector.begin(),
+                        determinate_solution.constant_solution_vector.end(),
+                        [](const T& v) {return v >= static_cast<T>(0) && v <= static_cast<T>(1); }
+                    ) &&
+                    LINEAR_ALGEBRA::equal(std::accumulate(
+                        determinate_solution.constant_solution_vector.begin(),
+                        determinate_solution.constant_solution_vector.end(),
+                        static_cast<T>(0)
+                    ), static_cast<T>(1)))
+                {
+                    return true;
+                }
+                else
+                {
+                    bool non_zero = false;
+                    for(auto& v : determinate_solution.constant_solution_vector)
+                    {
+                        if(!LINEAR_ALGEBRA::equal(v, static_cast<T>(0)))
+                        {
+                            if(v > static_cast<T>(0) && v <= static_cast<T>(1))
+                            {
+                                //only one non_zero coefficent is allowed
+                                if (non_zero)
+                                {
+                                    return false;
+                                }
+                                else
+                                {
+                                    non_zero = true;
+                                }
+                            }
+                            else
+                            {
+                                //if out of triangle bounds -> false
+                                return false;
+                            }
+                        }
+                    }
+
+                    return true;
+                }
             }
-        }
-        else
-        {
-            return false;
         }
     }
 

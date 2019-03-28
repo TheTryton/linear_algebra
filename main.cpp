@@ -76,9 +76,9 @@ namespace geometry3D_renderer
         if (!p1o || !p2o || !p3o)
             return;
 
-        auto p1 = *p1o;
-        auto p2 = *p2o;
-        auto p3 = *p3o;
+        auto& p1 = p1o.get_point();
+        auto& p2 = p2o.get_point();
+        auto& p3 = p3o.get_point();
 
         auto tri3D = geometry::triangle<double, 3>(p1, p2, p3);
 
@@ -277,11 +277,37 @@ void draw_segment(const geometry2D::segment<double>& segment, std::vector<char>&
 }
 
 #include <iostream>
+#include <vector>
+#include <map>
+#include <chrono>
 
 int main()
 {
+    using namespace std;
+    using namespace std::chrono;
+    
+
+
     using namespace geometry;
     using namespace geometry::geometry_io;
+    std::cout << typeid(geometry::perpendicular_solution<double, 3, 2>::perpendicular_result).name() << std::endl;
+    
+        
+    auto re = geometry::perpendicular( geometry::point_type<double, 3>{1,2,3}, geometry::point_type<double, 3>{1,2,3} );
+
+    std::cout << re.get_perpendicular_subspace_dimension() << std::endl;
+    std::cout << re.get_subspace<2>() << std::endl;
+
+    std::cin.get();
+
+    struct
+    {
+        int a = 0;
+    } a;
+    std::cout << std::is_same_v<decltype(std::move(std::move(a).a)),int&&> << std::endl;
+    std::cin.get();
+
+    
 
     sphere<double, 2> circle(
         point_type<double, 2>(-1, 0),
@@ -303,13 +329,13 @@ int main()
     }
     else
     {
-        switch(res->index())
+        switch(res.intersection_type())
         {
-        case 0:
-            std::cout << std::get<0>(*res) << std::endl;
+        case intersections::space_sphere_intersection_type::point:
+            std::cout << res.get_point() << std::endl;
             break;
-        case 1:
-            auto& t = std::get<1>(*res);
+        case intersections::space_sphere_intersection_type::sphere_creating_points:
+            auto& t = res.get_sphere_creating_points();
             for(auto& e : t)
             {
                 std::cout << e << std::endl;
@@ -322,29 +348,31 @@ int main()
     geometry::space<double, 1, 2> l1;
     l1[0] = { 1,3 };
     l1[1] = { 3,5 };
-    geometry::space<double, 1, 2> l2;
-    l2[0] = { 0,2 };
-    l2[1] = { 2,4 };
+    geometry::simplex<double, 2, 3> l2;
+    l2[0] = { 0,2,1 };
+    l2[1] = { 2,4,2 };
+    l2[2] = { 2,4,16 };
 
-    
     std::cout << l1 << std::endl;
     std::cout << l2 << std::endl;
-
-    auto result = geometry::intersections::intersection(l1, l2);
+    geometry::projections::project({ 1,2 }, l1);
+    geometry::projections::closest_point(geometry::point_type<double, 3>({ 1,2 }), l2);
+    auto result = geometry::intersections::intersection((geometry::space<double, 2, 3>)l2, (geometry::space<double, 2, 3>)l2);
+    result.get_subspace<1>();
     if(!result)
     {
         std::cout << "no intersection" << std::endl;
     }
     else
     {
-        auto& r = *result;
-        if(r.index() == 0)
+        switch(result.intersection_type())
         {
-            std::cout << std::get<0>(r) << std::endl;
-        }
-        else if(r.index() == 1)
-        {
-            std::cout << std::get<1>(r) << std::endl;
+        case intersections::space_space_intersection_type::point:
+            std::cout << result.get_point() << std::endl;
+            break;
+        case intersections::space_space_intersection_type::space:
+            std::cout << result.get_space() << std::endl;
+            break;
         }
     }
 

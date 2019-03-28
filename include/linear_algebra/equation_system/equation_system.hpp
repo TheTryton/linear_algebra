@@ -6,6 +6,221 @@
 
 NAMESPACE_LINEAR_ALGEBRA_BEGIN
 
+template<class T, size_t M>
+class equation_system_solution
+{
+public:
+    struct determinate_solution
+    {
+        vector<T, M>                constant_solution_vector; // terms in solution that does not depend on any parameters
+
+        //constructors
+        determinate_solution() = delete;
+
+        determinate_solution(const determinate_solution& other) :
+            constant_solution_vector(other.constant_solution_vector)
+        {
+        }
+        determinate_solution(determinate_solution&& other) :
+            constant_solution_vector(std::move(other.constant_solution_vector))
+        {
+        }
+        determinate_solution& operator=(const determinate_solution& other)
+        {
+            constant_solution_vector = other.constant_solution_vector;
+            return *this;
+        }
+        determinate_solution& operator=(determinate_solution&& other)
+        {
+            constant_solution_vector = std::move(other.constant_solution_vector);
+            return *this;
+        }
+
+        determinate_solution(const vector<T, M>& constant_solution_vector) :
+            constant_solution_vector(constant_solution_vector)
+        {
+        }
+        determinate_solution(vector<T, M>&& constant_solution_vector) :
+            constant_solution_vector(constant_solution_vector)
+        {
+        }
+    };
+    struct indeterminate_solution
+    {
+        vector<T, M>                constant_solution_vector; // terms in solution that does not depend on any parameters
+        std::vector<vector<T, M>>   infinite_solution_vectors; // groups of terms in solution that depend on parameters (grouped by parameter)
+
+        //constructors
+        indeterminate_solution() = delete;
+
+        indeterminate_solution(const indeterminate_solution& other) :
+            constant_solution_vector(other.constant_solution_vector),
+            infinite_solution_vectors(other.infinite_solution_vectors)
+        {
+        }
+        indeterminate_solution(indeterminate_solution&& other) :
+            constant_solution_vector(std::move(other.constant_solution_vector)),
+            infinite_solution_vectors(std::move(other.infinite_solution_vectors))
+        {
+        }
+        indeterminate_solution& operator=(const indeterminate_solution& other)
+        {
+            constant_solution_vector = other.constant_solution_vector;
+            infinite_solution_vectors = other.infinite_solution_vectors;
+            return *this;
+        }
+        indeterminate_solution& operator=(indeterminate_solution&& other)
+        {
+            constant_solution_vector = std::move(other.constant_solution_vector);
+            infinite_solution_vectors = std::move(other.infinite_solution_vectors);
+            return *this;
+        }
+
+        indeterminate_solution(const vector<T, M>& constant_solution_vector, const std::vector<vector<T, M>>& infinite_solution_vectors) :
+            constant_solution_vector(constant_solution_vector),
+            infinite_solution_vectors(infinite_solution_vectors)
+        {
+        }
+        indeterminate_solution(vector<T, M>&& constant_solution_vector, std::vector<vector<T, M>>&& infinite_solution_vectors) :
+            constant_solution_vector(constant_solution_vector),
+            infinite_solution_vectors(infinite_solution_vectors)
+        {
+        }
+    };
+private:
+    equation_system_type _type;
+    using solution_type = std::optional<std::variant<determinate_solution, indeterminate_solution>>;
+    solution_type _solution;
+
+    template<equation_system_type system_type>
+    using result_type = std::conditional_t<
+        system_type == equation_system_type::determinate, const determinate_solution&,
+        std::conditional_t<
+        system_type == equation_system_type::indeterminate, const indeterminate_solution&,
+        void
+        >>;
+public:
+    equation_system_solution():
+        _type(equation_system_type::contradictory)
+    {
+    }
+
+    equation_system_solution(const equation_system_solution& other) :
+        _type(other._type),
+        _solution(other._solution)
+    {
+    }
+    equation_system_solution(equation_system_solution&& other) :
+        _type(std::move(other._type)),
+        _solution(std::move(other._solution))
+    {
+        other._type = equation_system_type::contradictory;
+    }
+    equation_system_solution& operator=(const equation_system_solution& other)
+    {
+        _type = other._type;
+        _solution = other._solution;
+        return *this;
+    }
+    equation_system_solution& operator=(equation_system_solution&& other)
+    {
+        _type = std::move(other._type);
+        _solution = std::move(other._solution);
+        other._type = equation_system_type::contradictory;
+        return *this;
+    }
+
+    equation_system_solution(const determinate_solution& determinate_solution) :
+        _type(equation_system_type::determinate),
+        _solution(determinate_solution)
+    {
+    }
+    equation_system_solution(determinate_solution&& determinate_solution) :
+        _type(equation_system_type::determinate),
+        _solution(determinate_solution)
+    {
+    }
+    equation_system_solution& operator=(const determinate_solution& determinate_solution)
+    {
+        _type = equation_system_type::determinate;
+        _solution = determinate_solution;
+        return *this;
+    }
+    equation_system_solution& operator=(determinate_solution&& determinate_solution)
+    {
+        _type = equation_system_type::determinate;
+        _solution = determinate_solution;
+        return *this;
+    }
+
+    equation_system_solution(const indeterminate_solution& indeterminate_solution) :
+        _type(equation_system_type::indeterminate),
+        _solution(indeterminate_solution)
+    {
+    }
+    equation_system_solution(indeterminate_solution&& indeterminate_solution) :
+        _type(equation_system_type::indeterminate),
+        _solution(indeterminate_solution)
+    {
+    }
+    equation_system_solution& operator=(const indeterminate_solution& indeterminate_solution)
+    {
+        _type = equation_system_type::indeterminate;
+        _solution = indeterminate_solution;
+        return *this;
+    }
+    equation_system_solution& operator=(indeterminate_solution&& indeterminate_solution)
+    {
+        _type = equation_system_type::indeterminate;
+        _solution = indeterminate_solution;
+        return *this;
+    }
+public:
+    equation_system_type system_type() const
+    {
+        return _type;
+    }
+
+    determinate_solution& get_determinate_solution()
+    {
+        return std::get<0>(*_solution);
+    }
+    const determinate_solution& get_determinate_solution() const
+    {
+        return std::get<0>(*_solution);
+    }
+    indeterminate_solution& get_indeterminate_solution()
+    {
+        return std::get<1>(*_solution);
+    }
+    const indeterminate_solution& get_indeterminate_solution() const
+    {
+        return std::get<1>(*_solution);
+    }
+
+    template<equation_system_type system_type>
+    result_type<system_type> get_result() const
+    {
+        if constexpr (system_type == equation_system_type::determinate)
+        {
+            return std::get<0>(*_solution);
+        }
+        else if constexpr (system_type == equation_system_type::indeterminate)
+        {
+            return std::get<1>(*_solution);
+        }
+        else
+        {
+            return;
+        }
+    }
+public:
+    operator bool() const
+    {
+        return static_cast<bool>(_solution) && (_type != equation_system_type::contradictory);
+    }
+};
+
 ///<summary>
 /// solves linear equations system (N equations, M variables)
 /// <para>*** RESULTS ***</para>
@@ -16,7 +231,7 @@ NAMESPACE_LINEAR_ALGEBRA_BEGIN
 /// <param name="coefficents"> linear equation system coefficents represented in NxM matrix </param>
 /// <param name="constant_terms"> linear equation system constant terms </param>
 template<class T, size_t N, size_t M>
-std::optional<equation_system_solution<T, M>> solve_equation_system(const matrix<T, N, M>& coefficents, const vector<T, N>& constant_terms)
+equation_system_solution<T, M> solve_equation_system(const matrix<T, N, M>& coefficents, const vector<T, N>& constant_terms)
 {
     auto copy = coefficents;
     auto copy_terms = constant_terms;
@@ -167,7 +382,7 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(const matrix
 #endif
     }
 
-    vector<T, M> finite_solution;
+    vector<T, M> constant_solution_vector;
 
     //there can be at max D finite solutions to equation system i.e if N >= M there is only M variables but
     //N equations so at max there can only be min(N,M) == M solutions
@@ -188,7 +403,7 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(const matrix
             //first nonzero element in row is treated as finite solution variable
             if (!equal(copy[row][column], static_cast<T>(0)))
             {
-                finite_solution[column] = copy_terms[row];
+                constant_solution_vector[column] = copy_terms[row];
                 non_finite_solution_variables[column] = false;
                 found = true;
                 break;
@@ -200,7 +415,7 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(const matrix
             if (!equal(copy_terms[row], static_cast<T>(0)))
             {
                 //system is contradictory
-                return std::nullopt;
+                return equation_system_solution<T, M>();
             }
         }
     }
@@ -231,7 +446,16 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(const matrix
         }
     }
 
-    return std::make_pair(finite_solution, infinite_solution_vectors);
+    if (infinite_solution_vectors.empty())
+    {
+        //system is determinate
+        return equation_system_solution<T, M>(std::move(constant_solution_vector));
+    }
+    else
+    {
+        //system is indeterminate
+        return equation_system_solution<T, M>(std::move(constant_solution_vector), std::move(infinite_solution_vectors));
+    }
 }
 
 ///<summary>
@@ -244,7 +468,7 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(const matrix
 /// <param name="coefficents"> linear equation system coefficents represented in NxM matrix </param>
 /// <param name="constant_terms"> linear equation system constant terms </param>
 template<class T, size_t N, size_t M>
-std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N, M>&& coefficents, vector<T, N>&& constant_terms)
+equation_system_solution<T, M> solve_equation_system(matrix<T, N, M>&& coefficents, vector<T, N>&& constant_terms)
 {
     constexpr size_t D = N > M ? M : N;
 
@@ -392,7 +616,7 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N,
 #endif
     }
 
-    vector<T, M> finite_solution;
+    vector<T, M> constant_solution_vector;
 
     //there can be at max D finite solutions to equation system i.e if N >= M there is only M variables but
     //N equations so at max there can only be min(N,M) == M solutions
@@ -413,7 +637,7 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N,
             //first nonzero element in row is treated as finite solution variable
             if (!equal(coefficents[row][column], static_cast<T>(0)))
             {
-                finite_solution[column] = constant_terms[row];
+                constant_solution_vector[column] = constant_terms[row];
                 non_finite_solution_variables[column] = false;
                 found = true;
                 break;
@@ -425,7 +649,7 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N,
             if (!equal(constant_terms[row], static_cast<T>(0)))
             {
                 //system is contradictory
-                return std::nullopt;
+                return equation_system_solution<T, M>();
             }
         }
     }
@@ -456,7 +680,16 @@ std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N,
         }
     }
 
-    return std::make_pair(finite_solution, infinite_solution_vectors);
+    if (infinite_solution_vectors.empty())
+    {
+        //system is determinate
+        return equation_system_solution<T, M>(equation_system_solution<T, M>::determinate_solution(std::move(constant_solution_vector)));
+    }
+    else
+    {
+        //system is indeterminate
+        return equation_system_solution<T, M>(equation_system_solution<T, M>::indeterminate_solution(std::move(constant_solution_vector), std::move(infinite_solution_vectors)));
+    }
 }
 
 NAMESPACE_LINEAR_ALGEBRA_END

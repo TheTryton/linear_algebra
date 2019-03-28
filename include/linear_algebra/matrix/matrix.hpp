@@ -12,7 +12,7 @@ class matrix
     static_assert(std::is_default_constructible_v<T>, "Matrix element type must be default constructible!");
     template<class TO, size_t NO, size_t MO>
     friend class matrix;
-    template<class T, size_t TO>
+    template<class T, size_t D>
     friend class vector;
 private:
     class matrix_storage_static
@@ -2358,10 +2358,10 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const matrix<TO, NO, MO>& matrix);
 
     template<class T, size_t N, size_t M>
-    friend std::optional<equation_system_solution<T, M>> solve_equation_system(const matrix<T, N, M>& coefficents, const vector<T, N>& constant_terms);
+    friend equation_system_solution<T, M> solve_equation_system(matrix<T, N, M>&& coefficents, vector<T, N>&& constant_terms);
 
     template<class T, size_t N, size_t M>
-    friend std::optional<equation_system_solution<T, M>> solve_equation_system(matrix<T, N, M>&& coefficents, vector<T, N>&& constant_terms);
+    friend equation_system_solution<T, M> solve_equation_system(const matrix<T, N, M>& coefficents, const vector<T, N>& constant_terms);
 };
 
 template<class TO, size_t NO, size_t MO>

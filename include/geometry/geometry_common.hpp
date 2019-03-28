@@ -1,8 +1,7 @@
 #pragma once
 
+#include <system_error>
 #include <array>
-#include <variant>
-#include <tuple>
 
 #include "../linear_algebra/linear_algebra.hpp"
 
@@ -84,4 +83,37 @@ using tetrahedron = simplex<T, 3, D>;
 template<class T, size_t D>
 class sphere;
 
+enum class geometry_calculation_error
+{
+    none,
+    linearly_dependent_vectors,
+};
+
+struct geometry_calculation_error_category : std::error_category
+{
+    virtual const char* name() const noexcept override;
+    virtual std::string message(int e) const override;
+};
+
+const geometry_calculation_error_category geometry_calculation_error_category_instance{};
+
+class geometry_calculation
+{
+protected:
+    std::error_code _code;
+public:
+    geometry_calculation();
+    geometry_calculation(geometry_calculation_error error);
+public:
+    std::error_code get_error_code() const;
+};
+
 NAMESPACE_GEOMETRY_END
+
+namespace std
+{
+    template<>
+    struct is_error_code_enum<GEOMETRY::geometry_calculation_error> : true_type {};
+}
+
+std::error_code make_error_code(GEOMETRY::geometry_calculation_error error);
