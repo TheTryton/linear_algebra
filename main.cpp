@@ -280,19 +280,29 @@ void draw_segment(const geometry2D::segment<double>& segment, std::vector<char>&
 #include <vector>
 #include <map>
 #include <chrono>
+#include <tuple>
+
+using namespace std;
+using namespace std::chrono;
+using namespace linear_algebra;
 
 int main()
 {
-    using namespace std;
-    using namespace std::chrono;
+    using r = matrix_multiplication_proxy<matrix<double, 3, 4>, matrix<float, 4, 5>>;
+    using l = matrix_multiplication_proxy<matrix<double, 1, 2>, matrix<float, 2, 3>>;
+    matrix<double,1,5> res = l()*r();
+    cout << res;
+    //constexpr auto v = min_cost(matrix<double, 2, 20>(), matrix<double, 20, 1>(), matrix<double, 20, 1>());
+    cin.get();
+    /*
     
 
+    cin.get();
 
     using namespace geometry;
     using namespace geometry::geometry_io;
     std::cout << typeid(geometry::perpendicular_solution<double, 3, 2>::perpendicular_result).name() << std::endl;
     
-        
     auto re = geometry::perpendicular( geometry::point_type<double, 3>{1,2,3}, geometry::point_type<double, 3>{1,2,3} );
 
     std::cout << re.get_perpendicular_subspace_dimension() << std::endl;

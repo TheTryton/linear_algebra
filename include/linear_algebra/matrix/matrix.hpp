@@ -4,6 +4,27 @@
 
 NAMESPACE_LINEAR_ALGEBRA_BEGIN
 
+template<class... MS>
+class matrix_multiplication_proxy;
+
+template<class M, class... MS>
+constexpr size_t matrix_multiplication_proxy_result_rows()
+{
+    return M::rows();
+}
+
+template<class M>
+constexpr size_t matrix_multiplication_proxy_result_columns()
+{
+    return M::columns();
+}
+
+template<class M1, class M2, class... MS>
+constexpr size_t matrix_multiplication_proxy_result_columns()
+{
+    return matrix_multiplication_proxy_result_columns<M2, MS...>();
+}
+
 template<class T, size_t N, size_t M>
 class matrix
 {
@@ -88,6 +109,8 @@ private:
 
     using storage_type = typename std::conditional_t<is_big_matrix, matrix_storage_dynamic, matrix_storage_static>;
     storage_type _mat;
+private:
+
 public:
     using calculation_type = T;
 public:
@@ -1267,6 +1290,12 @@ public:
 
         return *this;
     }
+
+    //from proxy
+    template<class... MS, typename = typename std::enable_if_t<matrix_multiplication_proxy_result_rows<MS...>() == N && matrix_multiplication_proxy_result_columns<MS...>() == M>>
+    matrix<T, N, M>(const matrix_multiplication_proxy<MS...>& proxy);
+    template<class... MS, typename = typename std::enable_if_t<matrix_multiplication_proxy_result_rows<MS...>() == N && matrix_multiplication_proxy_result_columns<MS...>() == M>>
+    matrix<T, N, M>& operator=(const matrix_multiplication_proxy<MS...>& proxy);
 public:
     //matrix-matrix operators
 
@@ -1717,11 +1746,11 @@ public:
     auto operator*(const vector<TO, M>& vec) const;
 public:
     //matrix info and accessors
-    constexpr size_t rows() const
+    static constexpr size_t rows()
     {
         return N;
     }
-    constexpr size_t columns() const
+    static constexpr size_t columns()
     {
         return M;
     }
@@ -2363,6 +2392,214 @@ public:
     template<class T, size_t N, size_t M>
     friend equation_system_solution<T, M> solve_equation_system(const matrix<T, N, M>& coefficents, const vector<T, N>& constant_terms);
 };
+
+template<class T, class TO, size_t N, size_t M, size_t P>
+auto multiply_matrices(const matrix<TO, N, M>& m1, const matrix<TO, M, P>& m2)
+{
+    using cm_t = decltype(std::declval<T>() * std::declval<TO>() + std::declval<T>() * std::declval<TO>());
+
+    matrix<cm_t, N, P> result;
+
+#if USE_OPENMP
+    if (is_big_matrix)
+    {
+#pragma omp parallel for
+        for (int row = 0; row < static_cast<int>(N); row++)
+        {
+            for (size_t column = 0; column < P; column++)
+            {
+                //calculating column-row inner product
+
+                cm_t inner_product = static_cast<cm_t>(0);
+
+                for (size_t k = 0; k < M; k++)
+                {
+                    inner_product += static_cast<cm_t>(m1[row][k] * m2[k][column]);
+                }
+
+                result[row][column] = inner_product;
+            }
+        }
+    }
+    else
+    {
+        for (size_t row = 0; row < N; row++)
+        {
+            for (size_t column = 0; column < P; column++)
+            {
+                //calculating column-row inner product
+
+                cm_t inner_product = static_cast<cm_t>(0);
+
+                for (size_t k = 0; k < M; k++)
+                {
+                    inner_product += static_cast<cm_t>(m1[row][k] * m2[k][column]);
+                }
+
+                result[row][column] = inner_product;
+            }
+        }
+    }
+#else
+    for (size_t row = 0; row < N; row++)
+    {
+        for (size_t column = 0; column < P; column++)
+        {
+            //calculating column-row inner product
+
+            cm_t inner_product = static_cast<cm_t>(0);
+
+            for (size_t k = 0; k < M; k++)
+            {
+                inner_product += static_cast<cm_t>(m1[row][k] * m2[k][column]);
+            }
+
+            result._mat[row][column] = inner_product;
+        }
+    }
+#endif
+
+    return result;
+}
+
+template<class T, template<class...> class TT>
+struct is_of_template : std::false_type {};
+
+template<template<class...> class T, class... ARGS>
+struct is_of_template<T<ARGS...>, T> : std::true_type {};
+
+template<class T, template<class...> class TT>
+constexpr bool is_of_template_v = is_of_template<T, TT>::value;
+
+template<class... MS>
+class matrix_multiplication_proxy
+{
+    //static_assert(is_of_template<MS, matrix>, "Template arguments must be of matrix type");
+    template<class... MS>
+    friend class matrix_multiplication_proxy;
+private:
+    std::tuple<MS...> _matrices;
+
+    matrix_multiplication_proxy(std::tuple<MS...>&& ms) :
+        _matrices(ms)
+    {
+    }
+
+    matrix_multiplication_proxy(matrix_multiplication_proxy&& other) = default;
+
+    template<class... MS1, class... MS2, size_t... I1, size_t... I2>
+    static std::tuple<MS1..., MS2...> assign(std::tuple<MS1...>&& ms1, std::tuple<MS2...>&& ms2, std::index_sequence<I1...>, std::index_sequence<I2...>)
+    {
+        return std::make_tuple(std::get<I1>(ms1)..., std::get<I2>(ms2)...);
+    }
+public:
+    matrix_multiplication_proxy()
+    {
+    }
+    matrix_multiplication_proxy(const matrix_multiplication_proxy& other) = delete;
+
+    matrix_multiplication_proxy& operator=(const matrix_multiplication_proxy& other) = delete;
+    matrix_multiplication_proxy& operator=(matrix_multiplication_proxy&& other) = delete;
+
+    template<class... MSO>
+    matrix_multiplication_proxy<MS..., MSO...> operator*(matrix_multiplication_proxy<MSO...>&& other)
+    {
+        matrix_multiplication_proxy<MS..., MSO...> result;
+        result._matrices = assign(
+            std::move(_matrices),
+            std::move(other._matrices),
+            std::make_index_sequence<sizeof...(MS)>(),
+            std::make_index_sequence<sizeof...(MSO)>()
+        );
+        return result;
+    }
+private:
+    struct matrix_size
+    {
+        size_t rows;
+        size_t columns;
+    };
+
+    template<size_t S>
+    static constexpr  std::array<std::array<size_t, S>, S> get_multiplication_order(const std::array<matrix_size, S>& sizes)
+    {
+        std::array<std::array<size_t, S >, S > m = {};
+        for (size_t i = 0; i < S; i++)
+        {
+            m[i][i] = 0;
+        }
+        std::array<std::array<size_t, S >, S > s = {};
+
+        for (size_t l = 2; l <= S; l++)
+        {
+            for (size_t b = 0; b < S - l + 1; b++)
+            {
+                size_t e = b + l - 1;
+
+                m[b][e] = std::numeric_limits<size_t>::max();
+
+                for (size_t split = b; split < e; split++)
+                {
+                    size_t cost = m[b][split] + m[split + 1][e] + sizes[b].rows * sizes[split].columns * sizes[e].columns;
+                    if (cost < m[b][e])
+                    {
+                        m[b][e] = cost;
+                        s[b][e] = split + 1;
+                    }
+                }
+            }
+        }
+        for (size_t i = 0; i < S; i++)
+        {
+            s[i][i] = i;
+        }
+
+        return s;
+    }
+
+    template<class... TS>
+    static constexpr std::array<matrix_size, sizeof...(TS)> get_array()
+    {
+        return std::array<matrix_size, sizeof...(TS)>({ matrix_size{TS::rows(), TS::columns()}... });
+    }
+
+    template<size_t b, size_t e, class... TS, size_t... NS, size_t... MS>
+    static auto mult(const std::tuple<matrix<TS, NS, MS>...>& matrices)
+    {
+        constexpr size_t S = sizeof...(TS);
+        constexpr auto arr = get_array<matrix<TS, NS, MS>...>();
+        constexpr auto s = get_multiplication_order(arr);
+
+        if constexpr (b == e)
+        {
+            return std::get<s[b][e]>(matrices);
+        }
+        if constexpr (s[b][e] > b && s[b][e] <= e)
+        {
+            return mult<b, s[b][e] - 1>(matrices) * mult<s[b][e], e>(matrices);
+        }
+    }
+public:
+    auto operator()() const
+    {
+        return mult<0, sizeof...(MS) - 1>(_matrices);
+    }
+};
+
+template<class T, size_t N, size_t M>
+template<class... MS, typename>
+matrix<T, N, M>::matrix(const matrix_multiplication_proxy<MS...>& proxy)
+{
+    *this = proxy();
+}
+
+template<class T, size_t N, size_t M>
+template<class ...MS, typename>
+matrix<T, N, M>& matrix<T, N, M>::operator=(const matrix_multiplication_proxy<MS...>& proxy)
+{
+    *this = proxy();
+    return *this;
+}
 
 template<class TO, size_t NO, size_t MO>
 std::ostream& operator<<(std::ostream& os, const matrix<TO, NO, MO>& matrix)

@@ -8,6 +8,7 @@
 #include <vector>
 #include <optional>
 #include <variant>
+#include <array>
 
 #define LINEAR_ALGEBRA linear_algebra
 #define NAMESPACE_LINEAR_ALGEBRA_BEGIN namespace LINEAR_ALGEBRA{

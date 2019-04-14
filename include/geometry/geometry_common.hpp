@@ -1,7 +1,6 @@
 #pragma once
 
 #include <system_error>
-#include <array>
 
 #include "../linear_algebra/linear_algebra.hpp"
 
