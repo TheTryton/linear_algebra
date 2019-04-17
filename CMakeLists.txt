@@ -11,11 +11,14 @@ set(linear_algebra_Sources
     ##linear_algebra
 
     include/linear_algebra/linear_algebra_common.hpp
+    include/linear_algebra/linear_algebra_type_traits.hpp
+    include/linear_algebra/linear_algebra_common_functions.hpp
+
+    include/linear_algebra/vector/vector.hpp
+    include/linear_algebra/vector/vector.inl
 
     include/linear_algebra/matrix/matrix.hpp
-    include/linear_algebra/vector/vector.hpp
-
-    include/linear_algebra/common_matrix_vector_operations.inl
+    include/linear_algebra/matrix/matrix.inl
 
     include/linear_algebra/equation_system/equation_system.hpp
 

@@ -1,8 +1,9 @@
 #pragma once
 
 #include "../matrix/matrix.hpp"
+#include "../matrix/matrix.inl"
 #include "../vector/vector.hpp"
-#include "../common_matrix_vector_operations.inl"
+#include "../vector/vector.inl"
 
 NAMESPACE_LINEAR_ALGEBRA_BEGIN
 

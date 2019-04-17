@@ -205,7 +205,7 @@ bool segment<T>::contains(const point_type<T>& p, const T& segment_width) const
 {
     if constexpr (mode == inclusion_mode::full)
     {
-        return (p -projection(p, *this)).length() <= segment_width;
+        return (p - projection(p, *this)).length() <= segment_width;
     }
     if constexpr (mode == inclusion_mode::edgeless)
     {

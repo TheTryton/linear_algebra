@@ -21,7 +21,7 @@
 #undef max
 
 #define M_PI 3.14159265358979323846
-
+/*
 namespace geometry3D_renderer
 {
     using point3D = geometry::point_type<double, 3>;
@@ -124,7 +124,7 @@ namespace geometry3D_renderer
                     /*
                     auto w1 = 1.0 / (p - p1).length();
                     auto w2 = 1.0 / (p - p2).length();
-                    auto w3 = 1.0 / (p - p3).length();*/
+                    auto w3 = 1.0 / (p - p3).length();
 
                     auto color = (d1 * w1 + d2 * w2 + d3 * w3) / (w1 + w2 + w3);
 
@@ -145,7 +145,7 @@ namespace geometry3D_renderer
                         {
                             surface[y*width + x] = '.';
                         }
-                    }*/
+                    }
                 }
             }
         }
@@ -275,7 +275,7 @@ void draw_segment(const geometry2D::segment<double>& segment, std::vector<char>&
         }
     }
 }
-
+*/
 #include <iostream>
 #include <vector>
 #include <map>
@@ -285,13 +285,45 @@ void draw_segment(const geometry2D::segment<double>& segment, std::vector<char>&
 using namespace std;
 using namespace std::chrono;
 using namespace linear_algebra;
+using namespace linear_algebra::linear_algebra_io;
 
 int main()
 {
-    using r = matrix_multiplication_proxy<matrix<double, 3, 4>, matrix<float, 4, 5>>;
+
+    array<linear_algebra::vector<double, 3>, 3> l;
+    linear_algebra::vector<double, 2000> a;
+
+    auto k1 = (a*a) / (a*a);
+    auto k2 = k1 * a;
+
+    matrix<double, 2000, 2000> b;
+    
+    {
+        auto start = high_resolution_clock::now();
+        auto res = linear_algebra::detail::multiply_matrices(b, b);
+        auto end = high_resolution_clock::now();
+        cout << (end - start).count() / 1e9 << "s" << endl;
+
+        stringstream ss;
+        ss << res;
+    }
+
+    {
+        auto start = high_resolution_clock::now();
+        auto c = b * b * b * b * a;
+        auto end = high_resolution_clock::now();
+        cout << (end - start).count() / 1e9 << "s" << endl;
+        
+        stringstream ss;
+        ss << c;
+    }
+
+    /*using r = matrix_multiplication_proxy<matrix<double, 3, 4>, matrix<float, 4, 5>>;
     using l = matrix_multiplication_proxy<matrix<double, 1, 2>, matrix<float, 2, 3>>;
     matrix<double,1,5> res = l()*r();
     cout << res;
+    unsigned int a = 12;
+    cout << -a << endl;*/
     //constexpr auto v = min_cost(matrix<double, 2, 20>(), matrix<double, 20, 1>(), matrix<double, 20, 1>());
     cin.get();
     /*

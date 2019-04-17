@@ -52,7 +52,14 @@ projection_solution<T, D> project(const space<T, SD, D>& s, const point_type<T, 
         auto equation_system_solution = *inverse * constant_terms;
 
         return projection_solution<T, D>(
-                projection_solution<T, D>::point_projection_result(std::inner_product(equation_system_solution.begin(), equation_system_solution.end(), simplex_vectors.begin(), s[0]))
+            projection_solution<T, D>::point_projection_result(
+                std::inner_product(
+                    simplex_vectors.begin(),
+                    simplex_vectors.end(),
+                    equation_system_solution.begin(),
+                    s[0]
+                )
+                )
             );
     }
 }

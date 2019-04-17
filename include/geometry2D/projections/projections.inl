@@ -18,7 +18,7 @@ point_type<T> projection(const point_type<T>& p, const line<T>& l1)
     auto pp1 = l1[0] - p;
     auto p1p2 = l1[1] - l1[0];
     auto t = -(pp1 * p1p2) / (p1p2*p1p2);
-    return l1[0] + t* p1p2;
+    return l1[0] + t * p1p2;
 }
 
 template<class T>
