@@ -219,7 +219,7 @@ bool triangle<T>::contains(const point_type<T>& p) const
 template<class T>
 bool triangle<T>::operator==(const triangle& other) const
 {
-    for (uint d = 0; d < 3; d++)
+    for (size_t d = 0; d < 3; d++)
     {
         if (other._points[d] != _points[d])
         {
@@ -232,7 +232,7 @@ bool triangle<T>::operator==(const triangle& other) const
 template<class T>
 bool triangle<T>::operator!=(const triangle& other) const
 {
-    for (uint d = 0; d < 3; d++)
+    for (size_t d = 0; d < 3; d++)
     {
         if (other._points[d] != _points[d])
         {

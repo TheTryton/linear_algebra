@@ -15,7 +15,7 @@ std::optional<std::variant<point_type<T>, line<T>>> intersection(const line<T>& 
     auto p1p3 = l2[0] - l1[0];
 
     //check if both lines are declared with valid points (i.e line points are not the same)
-    if (p1p2.length_sqr() <= std::numeric_limits<T>::epsilon() || p1p2.length_sqr() <= std::numeric_limits<T>::epsilon())
+    if (p1p2.length_sqr() <= std::numeric_limits<T>::epsilon() || p4p3.length_sqr() <= std::numeric_limits<T>::epsilon())
     {
         return std::nullopt;
     }

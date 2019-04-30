@@ -186,7 +186,7 @@ space_space_intersection_solution<T, D, SD1, SD2> intersection(const space<T, SD
                         );
                 }
 
-                return get_result_intersection<T, D, SD1, SD2, SD2 - 1>(std::move(points));
+                return get_subspace_intersection_result<T, D, SD1, SD2, SD2 - 1>(std::move(points));
             }
         }
     }

@@ -18,22 +18,22 @@ template<class T, size_t D, size_t SD1, size_t SD2>
 class space_space_intersection_solution : public geometry_calculation
 {
 private:
-    template<class T, size_t D, class SD>
+    template<class TO, size_t DO, class SDO>
     struct subspace_intersection_result_impl
     {
-        using subspace_intersection_result_type = point_type<T, D>;
+        using subspace_intersection_result_type = point_type<TO, DO>;
     };
 
-    template<class T, size_t D>
-    struct subspace_intersection_result_impl<T, D, std::index_sequence<>>
+    template<class TO, size_t DO>
+    struct subspace_intersection_result_impl<TO, DO, std::index_sequence<>>
     {
         using subspace_intersection_result_type = std::variant<char>;
     };
 
-    template<class T, size_t D, size_t... SD>
-    struct subspace_intersection_result_impl<T, D, std::index_sequence<SD...>>
+    template<class TO, size_t DO, size_t... SDOS>
+    struct subspace_intersection_result_impl<TO, DO, std::index_sequence<SDOS...>>
     {
-        using subspace_intersection_result_type = std::variant<space<T, SD + 1, D>...>;
+        using subspace_intersection_result_type = std::variant<space<TO, SDOS + 1, DO>...>;
     };
 public:
     static constexpr size_t smaller_space_dimension = SD1 <= SD2 ? SD1 : SD2;

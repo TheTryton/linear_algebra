@@ -226,7 +226,7 @@ simplex<T, SD, D>& simplex<T, SD, D>::operator=(std::initializer_list<TO> init_l
 {
     if (init_list.size() < (SD + 1)*D)
     {
-        return;
+        return *this;
     }
 
     auto b = init_list.begin();
@@ -252,7 +252,7 @@ simplex<T, SD, D>& simplex<T, SD, D>::operator=(std::initializer_list<point_type
 {
     if (init_list.size() < SD + 1)
     {
-        return;
+        return *this;
     }
 
     auto b = init_list.begin();
@@ -638,6 +638,8 @@ NAMESPACE_GEOMETRY_IO_BEGIN
 template<class TO, size_t SDO, size_t DO>
 std::ostream& operator<<(std::ostream& os, const simplex<TO, SDO, DO>& s)
 {
+	using linear_algebra::linear_algebra_io::operator<<;
+
     os << SDO << "-dimensional simplex in " << DO << "-dimensional vector space:" << std::endl;
     os << "{" << std::endl;
     for (size_t i = 0; i < SDO; i++)

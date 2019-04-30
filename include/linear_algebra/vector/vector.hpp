@@ -19,8 +19,10 @@ class vector
     
     template<class TO, size_t DO>
     friend class vector;
-    template<class T, size_t N, size_t M>
+    template<class TO, size_t N, size_t M>
     friend class matrix;
+public:
+	static constexpr bool is_big_vector = D * sizeof(T) >= static_storage_max_size;
 private:
     class vector_storage_static
     {
@@ -63,11 +65,9 @@ private:
         inline const T* end() const;
     };
 
-    static constexpr bool is_big_vector = D * sizeof(T) >= static_storage_max_size;
-
     using storage_type = typename std::conditional_t<is_big_vector, vector_storage_dynamic, vector_storage_static>;
     
-    storage_type _coords;
+	storage_type _coords{};
 public:
     using mathematical_field_type = T;
 
@@ -200,10 +200,10 @@ public:
 public:
     //comparison operators
 
-    template<class TO, size_t DO, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_equality_comparable<T1, T2> || equality_comparable_v<T1, T2 > : equality_comparable_v<T1, T2>>>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_equality_comparable_v<T, TO> || equality_comparable_v<T, TO> : equality_comparable_v<T, TO>>>
     bool operator==(const vector<TO, DO>& other) const;
     
-    template<class TO, size_t DO, typename = typename std::enable_if_t<use_high_quality_inequality_comparison ? high_quality_inequality_comparable<T1, T2> || inequality_comparable_v<T1, T2 > : inequality_comparable_v<T1, T2>>>
+    template<class TO, size_t DO, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_inequality_comparable_v<T, TO> || inequality_comparable_v<T, TO> : inequality_comparable_v<T, TO>>>
     bool operator!=(const vector<TO, DO>& other) const;
 public:
     template<typename = typename std::enable_if_t<D >= 1 >>
@@ -234,14 +234,14 @@ public:
     template<typename = typename std::enable_if_t<D >= 4>>
     void set_w(const T& w);
 
-    template<typename = typename std::enable_if_t<D == 2>>
+    template<size_t DO = D, typename = typename std::enable_if_t<DO == 2>>
     vector<T, D> perpendicularLH() const;
-    template<typename = typename std::enable_if_t<D == 2>>
+    template<size_t DO = D,  typename = typename std::enable_if_t<DO == 2>>
     vector<T, D> perpendicularRH() const;
 
-    template<class TO, typename = typename std::enable_if_t<D == 3>>
+    template<class TO, typename = typename std::enable_if_t<D == 3 && std::is_convertible_v<TO, T>>>
     vector<T, D> cross_productLH(const vector<TO, D>& other) const;
-    template<class TO, typename = typename std::enable_if_t<D == 3>>
+    template<class TO, typename = typename std::enable_if_t<D == 3 && std::is_convertible_v<TO, T>>>
     vector<T, D> cross_productRH(const vector<TO, D>& other) const;
 
     template<typename = typename std::enable_if_t<has_sqrt_implementation_v<T>>>

@@ -7,7 +7,7 @@ NAMESPACE_GEOMETRY2D_BEGIN
 template<class T>
 class line
 {
-    template<class T>
+    template<class TO>
     friend class segment;
 private:
     std::array<point_type<T>, 2> _points;
@@ -76,8 +76,8 @@ public:
     template<class D>
     explicit operator segment<D>() const;
 public:
-    template<class T>
-    friend std::ostream& operator<<(std::ostream& os, const line<T>& l);
+    template<class TO>
+    friend std::ostream& operator<<(std::ostream& os, const line<TO>& l);
 };
 
 NAMESPACE_GEOMETRY2D_END

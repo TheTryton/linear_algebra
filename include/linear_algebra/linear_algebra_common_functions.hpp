@@ -85,15 +85,15 @@ constexpr bool has_epsilon_implementation_v = std::is_same_v<decltype(functions_
 constexpr bool use_high_quality_equality_comparison = false;
 
 template<class T1, class T2>
-constexpr bool high_quality_equality_comparable = can_be_subtracted_v<T1, T2> && has_epsilon_implementation_v<subtraction_result_t<T1, T2>> && has_abs_implementation_v<subtraction_result_t<T1, T2>> && less_equal_comparable_v<subtraction_result_t<T1, T2>, subtraction_result_t<T1, T2>>;
+constexpr bool high_quality_equality_comparable_v = can_be_subtracted_v<T1, T2> && has_epsilon_implementation_v<subtraction_result_t<T1, T2>> && has_abs_implementation_v<subtraction_result_t<T1, T2>> && less_equal_comparable_v<subtraction_result_t<T1, T2>, subtraction_result_t<T1, T2>>;
 
 template<class T1, class T2>
-constexpr bool high_quality_inequality_comparable = can_be_subtracted_v<T1, T2> && has_epsilon_implementation_v<subtraction_result_t<T1, T2>> && has_abs_implementation_v<subtraction_result_t<T1, T2>> && greater_comparable_v<subtraction_result_t<T1, T2>, subtraction_result_t<T1, T2>>;
+constexpr bool high_quality_inequality_comparable_v = can_be_subtracted_v<T1, T2> && has_epsilon_implementation_v<subtraction_result_t<T1, T2>> && has_abs_implementation_v<subtraction_result_t<T1, T2>> && greater_comparable_v<subtraction_result_t<T1, T2>, subtraction_result_t<T1, T2>>;
 
-template<class T1, class T2, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_equality_comparable<T1,T2> || equality_comparable_v<T1, T2 > : equality_comparable_v<T1, T2>>>
+template<class T1, class T2, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_equality_comparable_v<T1,T2> || equality_comparable_v<T1, T2 > : equality_comparable_v<T1, T2>>>
 inline bool equal(const T1& a, const T2& b)
 {
-    if constexpr (use_high_quality_equality_comparison && high_quality_equality_comparable<T1, T2>)
+    if constexpr (use_high_quality_equality_comparison && high_quality_equality_comparable_v<T1, T2>)
     {
         return functions_implementation<subtraction_result_t<T1, T2>>::abs(a - b) <= functions_implementation<subtraction_result_t<T1, T2>>::epsilon();
     }
@@ -103,10 +103,10 @@ inline bool equal(const T1& a, const T2& b)
     }
 }
 
-template<class T1, class T2, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_inequality_comparable<T1, T2> || inequality_comparable_v<T1, T2 > : inequality_comparable_v<T1, T2>>>
+template<class T1, class T2, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_inequality_comparable_v<T1, T2> || inequality_comparable_v<T1, T2 > : inequality_comparable_v<T1, T2>>>
 inline bool inequal(const T1& a, const T2& b)
 {
-    if constexpr (use_high_quality_equality_comparison && high_quality_inequality_comparable<T1, T2>)
+    if constexpr (use_high_quality_equality_comparison && high_quality_inequality_comparable_v<T1, T2>)
     {
         return functions_implementation<subtraction_result_t<T1, T2>>::abs(a - b) > functions_implementation<subtraction_result_t<T1, T2>>::epsilon();
     }

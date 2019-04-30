@@ -223,14 +223,14 @@ inline matrix<T, N, M>::matrix_storage_dynamic::matrix_storage_dynamic()
 }
 
 template<class T, size_t N, size_t M>
-inline matrix<T, N, M>::matrix_storage_dynamic::matrix_storage_dynamic(typename matrix<T, N, M>::matrix_storage_dynamic&& other)
+inline matrix<T, N, M>::matrix_storage_dynamic::matrix_storage_dynamic(typename matrix<T, N, M>::matrix_storage_dynamic&& other) noexcept
 {
     _mat = other._mat;
     other._mat = nullptr;
 }
 
 template<class T, size_t N, size_t M>
-inline typename matrix<T, N, M>::matrix_storage_dynamic& matrix<T, N, M>::matrix_storage_dynamic::operator=(typename matrix<T, N, M>::matrix_storage_dynamic&& other)
+inline typename matrix<T, N, M>::matrix_storage_dynamic& matrix<T, N, M>::matrix_storage_dynamic::operator=(typename matrix<T, N, M>::matrix_storage_dynamic&& other) noexcept
 {
     _mat = other._mat;
     other._mat = nullptr;
@@ -695,8 +695,6 @@ template<class T, size_t N, size_t M>
 template<class TO, size_t NO, size_t MO, typename>
 matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
 {
-    constexpr size_t N_min = NO > N ? N : NO;
-    constexpr size_t M_min = MO > M ? M : MO;
 #if USE_OPENMP
     if (is_big_matrix)
     {
@@ -708,9 +706,9 @@ matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
         */
 
 #pragma omp parallel for
-        for (int row = 0; row < static_cast<int>(N_min); row++)
+        for (int row = 0; row < static_cast<int>(smaller<N, NO>); row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
@@ -725,9 +723,9 @@ matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
 
         //  filling left-bottom submatrix to initialize it with 0-oes
 #pragma omp parallel for
-        for (int row = static_cast<int>(N_min); row < static_cast<int>(N); row++)
+        for (int row = static_cast<int>(smaller<N, NO>); row < static_cast<int>(N); row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
@@ -735,9 +733,9 @@ matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
 
         //  filling right-top submatrix to initialize it with 0-oes
 #pragma omp parallel for
-        for (int row = 0; row < static_cast<int>(N_min); row++)
+        for (int row = 0; row < static_cast<int>(smaller<N, NO>); row++)
         {
-            for (size_t column = M_min; column < M; column++)
+            for (size_t column = smaller<M, MO>; column < M; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
@@ -745,9 +743,9 @@ matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
 
         //  filling bottom-right submatrix to initialize it with 0-oes
 #pragma omp parallel for
-        for (int row = static_cast<int>(N_min); row < static_cast<int>(N); row++)
+        for (int row = static_cast<int>(smaller<N, NO>); row < static_cast<int>(N); row++)
         {
-            for (size_t column = M_min; column < M; column++)
+            for (size_t column = smaller<M, MO>; column < M; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
@@ -762,9 +760,9 @@ matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
         without getting out of matrix bounds
     */
 
-        for (size_t row = 0; row < N_min; row++)
+        for (size_t row = 0; row < smaller<N, NO>; row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
@@ -778,27 +776,27 @@ matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
         */
 
         //  filling left-bottom submatrix to initialize it with 0-oes
-        for (size_t row = N_min; row < N; row++)
+        for (size_t row = smaller<N, NO>; row < N; row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
         }
 
         //  filling right-top submatrix to initialize it with 0-oes
-        for (size_t row = 0; row < N_min; row++)
+        for (size_t row = 0; row < smaller<N, NO>; row++)
         {
-            for (size_t column = M_min; column < M; column++)
+            for (size_t column = smaller<M, MO>; column < M; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
         }
 
         //  filling bottom-right submatrix to initialize it with 0-oes
-        for (size_t row = N_min; row < N; row++)
+        for (size_t row = smaller<N, NO>; row < N; row++)
         {
-            for (size_t column = M_min; column < M; column++)
+            for (size_t column = smaller<M, MO>; column < M; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
@@ -812,9 +810,9 @@ matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
         without getting out of matrix bounds
     */
 
-    for (size_t row = 0; row < N_min; row++)
+    for (size_t row = 0; row < smaller<N, NO>; row++)
     {
-        for (size_t column = 0; column < M_min; column++)
+        for (size_t column = 0; column < smaller<M, MO>; column++)
         {
             _mat[row][column] = static_cast<T>(other._mat[row][column]);
         }
@@ -828,27 +826,27 @@ matrix<T, N, M>::matrix(const matrix<TO, NO, MO>& other)
     */
 
     //  filling left-bottom submatrix to initialize it with 0-oes
-    for (size_t row = N_min; row < N; row++)
+    for (size_t row = smaller<N, NO>; row < N; row++)
     {
-        for (size_t column = 0; column < M_min; column++)
+        for (size_t column = 0; column < smaller<M, MO>; column++)
         {
             _mat[row][column] = get_additive_identity<T>();
         }
     }
 
     //  filling right-top submatrix to initialize it with 0-oes
-    for (size_t row = 0; row < N_min; row++)
+    for (size_t row = 0; row < smaller<N, NO>; row++)
     {
-        for (size_t column = M_min; column < M; column++)
+        for (size_t column = smaller<M, MO>; column < M; column++)
         {
             _mat[row][column] = get_additive_identity<T>();
         }
     }
 
     //  filling bottom-right submatrix to initialize it with 0-oes
-    for (size_t row = N_min; row < N; row++)
+    for (size_t row = smaller<N, NO>; row < N; row++)
     {
-        for (size_t column = M_min; column < M; column++)
+        for (size_t column = smaller<M, MO>; column < M; column++)
         {
             _mat[row][column] = get_additive_identity<T>();
         }
@@ -860,8 +858,6 @@ template<class T, size_t N, size_t M>
 template<class TO, size_t NO, size_t MO, typename>
 matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
 {
-    constexpr size_t N_min = NO > N ? N : NO;
-    constexpr size_t M_min = MO > M ? M : MO;
 #if USE_OPENMP
     if (is_big_matrix)
     {
@@ -873,9 +869,9 @@ matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
         */
 
 #pragma omp parallel for
-        for (int row = 0; row < static_cast<int>(N_min); row++)
+        for (int row = 0; row < static_cast<int>(smaller<N, NO>); row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
@@ -890,9 +886,9 @@ matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
 
         //  filling left-bottom submatrix to initialize it with 0-oes
 #pragma omp parallel for
-        for (int row = static_cast<int>(N_min); row < static_cast<int>(N); row++)
+        for (int row = static_cast<int>(smaller<N, NO>); row < static_cast<int>(N); row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
@@ -900,9 +896,9 @@ matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
 
         //  filling right-top submatrix to initialize it with 0-oes
 #pragma omp parallel for
-        for (int row = 0; row < static_cast<int>(N_min); row++)
+        for (int row = 0; row < static_cast<int>(smaller<N, NO>); row++)
         {
-            for (size_t column = M_min; column < M; column++)
+            for (size_t column = smaller<M, MO>; column < M; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
@@ -910,9 +906,9 @@ matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
 
         //  filling bottom-right submatrix to initialize it with 0-oes
 #pragma omp parallel for
-        for (int row = static_cast<int>(N_min); row < static_cast<int>(N); row++)
+        for (int row = static_cast<int>(smaller<N, NO>); row < static_cast<int>(N); row++)
         {
-            for (size_t column = M_min; column < M; column++)
+            for (size_t column = smaller<M, MO>; column < M; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
@@ -927,9 +923,9 @@ matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
         without getting out of matrix bounds
     */
 
-        for (size_t row = 0; row < N_min; row++)
+        for (size_t row = 0; row < smaller<N, NO>; row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
@@ -943,27 +939,27 @@ matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
         */
 
         //  filling left-bottom submatrix to initialize it with 0-oes
-        for (size_t row = N_min; row < N; row++)
+        for (size_t row = smaller<N, NO>; row < N; row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
         }
 
         //  filling right-top submatrix to initialize it with 0-oes
-        for (size_t row = 0; row < N_min; row++)
+        for (size_t row = 0; row < smaller<N, NO>; row++)
         {
-            for (size_t column = M_min; column < M; column++)
+            for (size_t column = smaller<M, MO>; column < M; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
         }
 
         //  filling bottom-right submatrix to initialize it with 0-oes
-        for (size_t row = N_min; row < N; row++)
+        for (size_t row = smaller<N, NO>; row < N; row++)
         {
-            for (size_t column = M_min; column < M; column++)
+            for (size_t column = smaller<M, MO>; column < M; column++)
             {
                 _mat[row][column] = get_additive_identity<T>();
             }
@@ -977,9 +973,9 @@ matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
         without getting out of matrix bounds
     */
 
-    for (size_t row = 0; row < N_min; row++)
+    for (size_t row = 0; row < smaller<N, NO>; row++)
     {
-        for (size_t column = 0; column < M_min; column++)
+        for (size_t column = 0; column < smaller<M, MO>; column++)
         {
             _mat[row][column] = static_cast<T>(other._mat[row][column]);
         }
@@ -993,27 +989,27 @@ matrix<T, N, M>::matrix(matrix<TO, NO, MO>&& other)
     */
 
     //  filling left-bottom submatrix to initialize it with 0-oes
-    for (size_t row = N_min; row < N; row++)
+    for (size_t row = smaller<N, NO>; row < N; row++)
     {
-        for (size_t column = 0; column < M_min; column++)
+        for (size_t column = 0; column < smaller<M, MO>; column++)
         {
             _mat[row][column] = get_additive_identity<T>();
         }
     }
 
     //  filling right-top submatrix to initialize it with 0-oes
-    for (size_t row = 0; row < N_min; row++)
+    for (size_t row = 0; row < smaller<N, NO>; row++)
     {
-        for (size_t column = M_min; column < M; column++)
+        for (size_t column = smaller<M, MO>; column < M; column++)
         {
             _mat[row][column] = get_additive_identity<T>();
         }
     }
 
     //  filling bottom-right submatrix to initialize it with 0-oes
-    for (size_t row = N_min; row < N; row++)
+    for (size_t row = smaller<N, NO>; row < N; row++)
     {
-        for (size_t column = M_min; column < M; column++)
+        for (size_t column = smaller<M, MO>; column < M; column++)
         {
             _mat[row][column] = get_additive_identity<T>();
         }
@@ -1025,15 +1021,13 @@ template<class T, size_t N, size_t M>
 template<class TO, size_t NO, size_t MO, typename>
 matrix<T, N, M>& matrix<T, N, M>::operator=(const matrix<TO, NO, MO>& other)
 {
-    constexpr size_t N_min = NO > N ? N : NO;
-    constexpr size_t M_min = MO > M ? M : MO;
 #if USE_OPENMP
     if (is_big_matrix)
     {
 #pragma omp parallel for
-        for (int row = 0; row < static_cast<int>(N_min); row++)
+        for (int row = 0; row < static_cast<int>(smaller<N, NO>); row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
@@ -1041,18 +1035,18 @@ matrix<T, N, M>& matrix<T, N, M>::operator=(const matrix<TO, NO, MO>& other)
     }
     else
     {
-        for (size_t row = 0; row < N_min; row++)
+        for (size_t row = 0; row < smaller<N, NO>; row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
     }
 #else
-    for (size_t row = 0; row < N_min; row++)
+    for (size_t row = 0; row < smaller<N, NO>; row++)
     {
-        for (size_t column = 0; column < M_min; column++)
+        for (size_t column = 0; column < smaller<M, MO>; column++)
         {
             _mat[row][column] = static_cast<T>(other._mat[row][column]);
         }
@@ -1065,15 +1059,13 @@ template<class T, size_t N, size_t M>
 template<class TO, size_t NO, size_t MO, typename>
 matrix<T, N, M>& matrix<T, N, M>::operator=(matrix<TO, NO, MO>&& other)
 {
-    constexpr size_t N_min = NO > N ? N : NO;
-    constexpr size_t M_min = MO > M ? M : MO;
 #if USE_OPENMP
     if (is_big_matrix)
     {
 #pragma omp parallel for
-        for (int row = 0; row < static_cast<int>(N_min); row++)
+        for (int row = 0; row < static_cast<int>(smaller<N, NO>); row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
@@ -1081,18 +1073,18 @@ matrix<T, N, M>& matrix<T, N, M>::operator=(matrix<TO, NO, MO>&& other)
     }
     else
     {
-        for (size_t row = 0; row < N_min; row++)
+        for (size_t row = 0; row < smaller<N, NO>; row++)
         {
-            for (size_t column = 0; column < M_min; column++)
+            for (size_t column = 0; column < smaller<M, MO>; column++)
             {
                 _mat[row][column] = static_cast<T>(other._mat[row][column]);
             }
         }
     }
 #else
-    for (size_t row = 0; row < N_min; row++)
+    for (size_t row = 0; row < smaller<N, NO>; row++)
     {
-        for (size_t column = 0; column < M_min; column++)
+        for (size_t column = 0; column < smaller<M, MO>; column++)
         {
             _mat[row][column] = static_cast<T>(other._mat[row][column]);
         }
@@ -1146,13 +1138,13 @@ matrix<T, N, M>::matrix(const TOS&... vs)
 {
     std::array<T, sizeof...(TOS)> elements = { static_cast<T>(vs)... };
 
-    constexpr size_t DM = sizeof...(T) > N*M ? N * M : sizeof...(T);
+    constexpr size_t DM = sizeof...(TOS) > N*M ? N * M : sizeof...(TOS);
 
     for (size_t row = 0; row < N; row++)
     {
         for (size_t column = 0; column < M; column++)
         {
-            if (row*column < sizeof...(T))
+            if (row*column < sizeof...(TOS))
             {
                 _mat[row][column] = elements[row*M + column];
             }
@@ -1208,13 +1200,13 @@ matrix<T, N, M>::matrix(TOS&&... vs)
 {
     std::array<T, sizeof...(TOS)> elements = { static_cast<T>(vs)... };
 
-    constexpr size_t DM = sizeof...(T) > N*M ? N * M : sizeof...(T);
+    constexpr size_t DM = sizeof...(TOS) > N*M ? N * M : sizeof...(TOS);
 
     for (size_t row = 0; row < N; row++)
     {
         for (size_t column = 0; column < M; column++)
         {
-            if (row*column < sizeof...(T))
+            if (row*column < sizeof...(TOS))
             {
                 _mat[row][column] = std::move(elements[row*M + column]);
             }
@@ -1693,7 +1685,7 @@ template<class T, size_t N, size_t M>
 template<class TO, size_t NO, size_t MO, typename>
 matrix<subtraction_result_t<T, TO>, smaller<N, NO>, smaller<M, MO>> matrix<T, N, M>::operator-(const matrix<TO, NO, MO>& other) const
 {
-    matrix<cm_t, smaller<N, NO>, smaller<M, MO>> result;
+    matrix<subtraction_result_t<T, TO>, smaller<N, NO>, smaller<M, MO>> result;
 
 #if USE_OPENMP
     if (is_big_matrix)
@@ -1741,7 +1733,7 @@ template<class T, size_t N, size_t M>
 template<class... MOS, typename>
 matrix_multiplication_proxy<matrix<T, N, M>, MOS...> matrix<T, N, M>::operator*(const matrix_multiplication_proxy<MOS...>& other) const
 {
-    return matrix_multiplication_proxy<matrix<T, N, M>, matrix<TO, M, P>>(std::tuple_cat(std::tuple<const matrix<TO, M, P>&>(*this), other._matrices));
+    return matrix_multiplication_proxy<matrix<T, N, M>, MOS...>(std::tuple_cat(std::tuple<const matrix<T, N, M>&>(*this), other._matrices));
 }
 
 template<class T, size_t N, size_t M>
@@ -2107,6 +2099,8 @@ bool matrix<T, N, M>::operator==(const matrix<TO, NO, MO>& other) const
 #if USE_OPENMP
         if (is_big_matrix)
         {
+            bool equals = true;
+
 #pragma omp parallel for
             for (int row = 0; row < static_cast<int>(N); row++)
             {
@@ -2114,10 +2108,12 @@ bool matrix<T, N, M>::operator==(const matrix<TO, NO, MO>& other) const
                 {
                     if (!equal(_mat[row][column], other._mat[row][column]))
                     {
-                        return false;
+                        equals = false;
                     }
                 }
             }
+
+            return equals;
         }
         else
         {
@@ -2161,6 +2157,8 @@ bool matrix<T, N, M>::operator!=(const matrix<TO, NO, MO>& other) const
 #if USE_OPENMP
         if (is_big_matrix)
         {
+            bool inequals = false;
+
 #pragma omp parallel for
             for (int row = 0; row < static_cast<int>(N); row++)
             {
@@ -2168,10 +2166,12 @@ bool matrix<T, N, M>::operator!=(const matrix<TO, NO, MO>& other) const
                 {
                     if (inequal(_mat[row][column], other._mat[row][column]))
                     {
-                        return true;
+                        inequals = true;
                     }
                 }
             }
+
+            return inequals;
         }
         else
         {
@@ -2341,7 +2341,7 @@ std::optional<matrix<T, N, M>> matrix<T, N, M>::inverted() const
     //so we need to initialize its diagonal elements to 1
     for (size_t diagonal = 0; diagonal < S; diagonal++)
     {
-        copy._mat[diagonal][S + diagonal] = get_multiplicative_identity<T>;
+        copy._mat[diagonal][S + diagonal] = get_multiplicative_identity<T>();
     }
 
     for (size_t diagonal = 0; diagonal < S; diagonal++)

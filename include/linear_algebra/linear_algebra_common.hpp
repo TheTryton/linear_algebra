@@ -10,6 +10,7 @@
 #include <variant>
 #include <array>
 #include <tuple>
+#include <cmath>
 
 #define LINEAR_ALGEBRA linear_algebra
 #define NAMESPACE_LINEAR_ALGEBRA_BEGIN namespace LINEAR_ALGEBRA{

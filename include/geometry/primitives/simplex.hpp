@@ -14,9 +14,9 @@ NAMESPACE_GEOMETRY_IO_END
 template<class T, size_t SD, size_t D>
 class simplex
 {
-    template<class T, size_t SD, size_t D>
+    template<class TO, size_t SDO, size_t DO>
     friend class simplex;
-    template<class T, size_t SD, size_t D>
+    template<class TO, size_t SDO, size_t DO>
     friend class space;
     static_assert(SD <= D, "Simplex dimension must must less or equal to vector space dimension!");
 private:

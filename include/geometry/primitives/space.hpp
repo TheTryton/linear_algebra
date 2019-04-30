@@ -14,9 +14,9 @@ NAMESPACE_GEOMETRY_IO_END
 template<class T, size_t SD, size_t D>
 class space
 {
-    template<class T, size_t SD, size_t D>
+    template<class TO, size_t SDO, size_t DO>
     friend class space;
-    template<class T, size_t SD, size_t D>
+    template<class TO, size_t SDO, size_t DO>
     friend class simplex;
     static_assert(SD <= D, "Space dimension must must less or equal to vector space dimension!");
 private:
@@ -83,7 +83,7 @@ public:
     template<class TO, size_t DO, typename = typename std::enable_if_t<std::is_convertible_v<TO, T> && DO >= D>>
     space<T, SD, D>& operator=(std::initializer_list<point_type<TO, DO>> init_list);
 
-    // simpex conversion constructors/operators
+    // simplex conversion constructors/operators
 
     space(const simplex<T, SD, D>& other);
     space(simplex<T, SD, D>&& other);

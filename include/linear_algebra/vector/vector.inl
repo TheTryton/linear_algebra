@@ -79,7 +79,6 @@ inline typename vector<T, D>::vector_storage_dynamic& vector<T, D>::vector_stora
 
 template<class T, size_t D>
 inline vector<T, D>::vector_storage_dynamic::~vector_storage_dynamic()
-
 {
     if (_coords)
     {
@@ -344,7 +343,7 @@ vector<T, D>::vector(std::initializer_list<TO> init_list)
 
     size_t DM = init_list.size() > D ? D : init_list.size();
 
-    std::transform(other._coords.begin(), other._coords.begin() + DM, _coords.begin(), [](const TO& v) {
+    std::transform(init_list.begin(), init_list.begin() + DM, _coords.begin(), [](const TO& v) {
         return static_cast<T>(v);
     });
 
@@ -395,7 +394,7 @@ vector<T, D>& vector<T, D>::operator=(std::initializer_list<TO> init_list)
 
     size_t DM = init_list.size() > D ? D : init_list.size();
 
-    std::transform(other._coords.begin(), other._coords.begin() + DM, _coords.begin(), [](const TO& v) {
+    std::transform(init_list.begin(), init_list.begin() + DM, _coords.begin(), [](const TO& v) {
         return static_cast<T>(v);
     });
 
@@ -421,7 +420,6 @@ template<class TO, size_t DO, typename>
 vector<subtraction_result_t<T, TO>, smaller<D, DO>> vector<T, D>::operator-(const vector<TO, DO>& other) const
 {
     vector<addition_result_t<T, TO>, smaller<D, DO>> result;
-
     for (size_t d = 0; d < smaller<D, DO>; d++)
     {
         result._coords[d] = _coords[d] - other._coords[d];
@@ -707,15 +705,15 @@ void vector<T, D>::set_w(const T& w)
 }
 
 template<class T, size_t D>
-template<typename>
+template<size_t DO, typename>
 vector<T, D> vector<T, D>::perpendicularLH() const
 {
     return vector<T, D>(_coords[1], -_coords[0]);
 }
 
 template<class T, size_t D>
-template<typename>
-inline vector<T, D> vector<T, D>::perpendicularRH() const
+template<size_t DO, typename>
+vector<T, D> vector<T, D>::perpendicularRH() const
 {
     return vector<T, D>(-_coords[1], _coords[0]);
 }

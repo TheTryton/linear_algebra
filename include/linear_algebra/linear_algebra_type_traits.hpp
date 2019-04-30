@@ -368,13 +368,4 @@ const T& get_multiplicative_identity()
     }
 }
 
-template<class T, template<class...> class TT>
-struct is_of_template : std::false_type {};
-
-template<template<class...> class T, class... ARGS>
-struct is_of_template<T<ARGS...>, T> : std::true_type {};
-
-template<class T, template<class...> class TT>
-constexpr bool is_of_template_v = is_of_template<T, TT>::value;
-
 NAMESPACE_LINEAR_ALGEBRA_END

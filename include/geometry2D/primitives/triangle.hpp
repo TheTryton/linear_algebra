@@ -48,8 +48,8 @@ public:
     bool operator==(const triangle& other) const;
     bool operator!=(const triangle& other) const;
 public:
-    template<class T>
-    friend std::ostream& operator<<(std::ostream& os, const triangle<T>& t);
+    template<class TO>
+    friend std::ostream& operator<<(std::ostream& os, const triangle<TO>& t);
 };
 
 NAMESPACE_GEOMETRY2D_END

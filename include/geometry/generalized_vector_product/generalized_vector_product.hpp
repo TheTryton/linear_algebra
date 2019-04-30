@@ -9,16 +9,16 @@ template<class T, size_t D, size_t K>
 class perpendicular_solution : public geometry_calculation
 {
 private:
-    template<class T, size_t D, class K>
+    template<class TO, size_t DO, class KO>
     struct perpendicular_result_impl
     {
         using perpendicular_result_type = void;
     };
 
-    template<class T, size_t D, size_t... K>
-    struct perpendicular_result_impl<T, D, std::index_sequence<K...>>
+    template<class TO, size_t DO, size_t... KOS>
+    struct perpendicular_result_impl<TO, DO, std::index_sequence<KOS...>>
     {
-        using perpendicular_result_type = std::variant<space<T, D - K - 1, D>...>;
+        using perpendicular_result_type = std::variant<space<TO, DO - KOS - 1, DO>...>;
     };
 public:
     using perpendicular_result = typename perpendicular_result_impl<

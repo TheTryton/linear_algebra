@@ -245,7 +245,7 @@ line<T> line<T>::translated(const vector_type<T>& v) const
 template<class T>
 bool line<T>::operator==(const line& other) const
 {
-    for (uint d = 0; d < 2; d++)
+    for (size_t d = 0; d < 2; d++)
     {
         if (other._points[d] != _points[d])
         {
@@ -258,7 +258,7 @@ bool line<T>::operator==(const line& other) const
 template<class T>
 bool line<T>::operator!=(const line& other) const
 {
-    for (uint d = 0; d < 2; d++)
+    for (size_t d = 0; d < 2; d++)
     {
         if (other._points[d] != _points[d])
         {

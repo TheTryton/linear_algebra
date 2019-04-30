@@ -251,7 +251,7 @@ segment<T> segment<T>::translated(const vector_type<T>& v) const
 template<class T>
 bool segment<T>::operator==(const segment& other) const
 {
-    for (uint d = 0; d < 2; d++)
+    for (size_t d = 0; d < 2; d++)
     {
         if (other._points[d] != _points[d])
         {
@@ -264,7 +264,7 @@ bool segment<T>::operator==(const segment& other) const
 template<class T>
 bool segment<T>::operator!=(const segment& other) const
 {
-    for (uint d = 0; d < 2; d++)
+    for (size_t d = 0; d < 2; d++)
     {
         if (other._points[d] != _points[d])
         {

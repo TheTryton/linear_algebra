@@ -100,8 +100,8 @@ public:
     bool operator==(const rect& other) const;
     bool operator!=(const rect& other) const;
 public:
-    template<class T>
-    friend std::ostream& operator<<(std::ostream& os, const rect<T>& rect);
+    template<class TO>
+    friend std::ostream& operator<<(std::ostream& os, const rect<TO>& rect);
 };
 
 NAMESPACE_GEOMETRY2D_END

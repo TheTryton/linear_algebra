@@ -315,7 +315,7 @@ sphere<T, D>& sphere<T, D>::operator=(std::initializer_list<TO> init_list)
     {
         _center = point_type<T, D>();
         _radius = static_cast<T>(0);
-        return;
+        return *this;
     }
 
     std::array<T, (D + 1)*D> coords;
@@ -356,7 +356,7 @@ sphere<T, D>& sphere<T, D>::operator=(std::initializer_list<point_type<TO, DO>> 
     {
         _center = point_type<T, D>();
         _radius = static_cast<T>(0);
-        return;
+        return *this;
     }
 
     std::array<point_type<T, D>, D + 1> points;
@@ -440,6 +440,8 @@ NAMESPACE_GEOMETRY_IO_BEGIN
 template<class TO, size_t DO>
 std::ostream& operator<<(std::ostream& os, const sphere<TO, DO>& s)
 {
+	using linear_algebra::linear_algebra_io::operator<<;
+
     os << DO << "-dimensional sphere in " << DO << "-dimensional vector space:" << std::endl;
     os << "{" << std::endl;
     os << "\tcenter = " << s._center << std::endl;

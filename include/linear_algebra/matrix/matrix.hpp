@@ -14,9 +14,21 @@ NAMESPACE_LINEAR_ALGEBRA_IO_END
 template<class... MS>
 class matrix_multiplication_proxy
 {
-    //static_assert(std::conjunction_v<is_of_template_v<MS, matrix>...>, "Template arguments must be of matrix type");
-    
-    template<class... MS>
+	template<class TS>
+	struct is_matrix_specialization : std::false_type {};
+
+	template<class T, size_t N, size_t M>
+	struct is_matrix_specialization<matrix<T, N, M>> : std::true_type {};
+
+	template<class TS>
+	static constexpr bool is_matrix_specialization_v = is_matrix_specialization<TS>::value;
+
+	template<class... TSS>
+	static constexpr bool are_matrix_specialization_v = (is_matrix_specialization_v<TSS> && ...);
+
+	static_assert(are_matrix_specialization_v<MS...>, "Template arguments must be of matrix type!");
+
+    template<class... MSO>
     friend class matrix_multiplication_proxy;
     template<class T, size_t N, size_t M>
     friend class matrix;
@@ -70,6 +82,9 @@ public:
     matrix<typename matrix_multiplication_proxy<MS...>::result_mathematical_field_type, matrix_multiplication_proxy<MS...>::result_rows, matrix_multiplication_proxy<MS...>::result_columns> operator*() const;
 };
 
+template<>
+class matrix_multiplication_proxy<> {};
+
 template<class T, size_t N, size_t M>
 class matrix
 {
@@ -78,8 +93,10 @@ class matrix
 
     template<class TO, size_t NO, size_t MO>
     friend class matrix;
-    template<class T, size_t D>
+    template<class TO, size_t D>
     friend class vector;
+public:
+	static constexpr bool is_big_matrix = N * M * sizeof(T) >= static_storage_max_size;
 private:
     class matrix_storage_static
     {
@@ -99,8 +116,8 @@ private:
         T* _mat = nullptr;
     public:
         inline matrix_storage_dynamic();
-        inline matrix_storage_dynamic(matrix<T,N,M>::matrix_storage_dynamic&& other);
-        inline matrix_storage_dynamic& operator=(matrix_storage_dynamic&& other);
+        inline matrix_storage_dynamic(matrix<T,N,M>::matrix_storage_dynamic&& other) noexcept;
+        inline matrix_storage_dynamic& operator=(matrix_storage_dynamic&& other) noexcept;
         inline ~matrix_storage_dynamic();
     public:
         inline T* operator[](size_t row);
@@ -110,11 +127,9 @@ private:
         inline const T* data() const;
     };
 
-    static constexpr bool is_big_matrix = N * M * sizeof(T) >= static_storage_max_size;
-
     using storage_type = typename std::conditional_t<is_big_matrix, matrix_storage_dynamic, matrix_storage_static>;
 
-    storage_type _mat;
+	storage_type _mat{};
 public:
     using mathematical_field_type = T;
 
@@ -225,7 +240,7 @@ public:
     
     template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<can_be_subtracted_v<T, TO>>>
     matrix<subtraction_result_t<T, TO>, smaller<N, NO>, smaller<M, MO>> operator-(const matrix<TO, NO, MO>& other) const;
-    
+
     template<class TO, size_t P, typename = typename std::enable_if_t<can_calculate_inner_product_v<T, TO>>>
     matrix_multiplication_proxy<matrix<T, N, M>, matrix<TO, M, P>> operator*(const matrix<TO, M, P>& other) const;
     
@@ -284,10 +299,10 @@ public:
     //and inequal if there is one element that is not equal to corresponding one
     //else matrices are always inequal
 
-    template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_equality_comparable<T1, T2> || equality_comparable_v<T1, T2 > : equality_comparable_v<T1, T2>>>
+    template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_equality_comparable_v<T, TO> || equality_comparable_v<T, TO> : equality_comparable_v<T, TO>>>
     bool operator==(const matrix<TO, NO, MO>& other) const;
     
-    template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<use_high_quality_inequality_comparison ? high_quality_inequality_comparable<T1, T2> || inequality_comparable_v<T1, T2 > : inequality_comparable_v<T1, T2>>>
+    template<class TO, size_t NO, size_t MO, typename = typename std::enable_if_t<use_high_quality_equality_comparison ? high_quality_inequality_comparable_v<T, TO> || inequality_comparable_v<T, TO> : inequality_comparable_v<T, TO>>>
     bool operator!=(const matrix<TO, NO, MO>& other) const;
 private:
     //helpers
@@ -321,11 +336,11 @@ public:
     template<class TO, size_t NO, size_t MO>
     friend std::ostream& LINEAR_ALGEBRA_IO::operator<<(std::ostream& os, const matrix<TO, NO, MO>& m);
 
-    template<class T, size_t N, size_t M>
-    friend equation_system_solution<T, M> solve_equation_system(matrix<T, N, M>&& coefficents, vector<T, N>&& constant_terms);
+    template<class TO, size_t NO, size_t MO>
+    friend equation_system_solution<TO, MO> solve_equation_system(matrix<TO, NO, MO>&& coefficents, vector<TO, NO>&& constant_terms);
 
-    template<class T, size_t N, size_t M>
-    friend equation_system_solution<T, M> solve_equation_system(const matrix<T, N, M>& coefficents, const vector<T, N>& constant_terms);
+    template<class TO, size_t NO, size_t MO>
+    friend equation_system_solution<TO, MO> solve_equation_system(const matrix<TO, NO, MO>& coefficents, const vector<TO, NO>& constant_terms);
 };
 
 NAMESPACE_LINEAR_ALGEBRA_END
